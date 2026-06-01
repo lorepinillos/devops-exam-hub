@@ -1,0 +1,824 @@
+================================================================================
+LOBECHAT / AWS DEVOPS & MLOPS — EXAM MASTER NOTES
+ESADE C8 "DevOps & MLOps" final exam (40 MCQ + 10 short "why" questions)
+Author/owner: Lorena Pinillos
+Scope of theory: DevOps/MLOps, GitHub, CI/CD, IaC, Docker, Ansible, Kubernetes.
+   (Scope ENDS at Kubernetes. SageMaker / advanced services are OUT of scope.)
+Every fact below was verified against the actual repo files. EXACT values quoted.
+================================================================================
+
+
+==== 1. OVERVIEW ====
+
+  WHAT THE PROJECT IS
+  - LobeChat is a self-hosted, multi-component AI chat platform (a Next.js UI
+    with a database backend) deployed as a docker-compose stack on ONE AWS EC2
+    instance, exposed publicly over HTTPS through a reverse proxy.
+  - The exam "technical part" is THIS repository and its AWS deployment.
+  - Two repos / two architectures exist:
+      * v1 = "lobechat-aws" (Terraform IaC; local GPU vLLM + Gemma path).
+      * v2 = "lobechat-aws-cfn" (CloudFormation IaC; AWS Bedrock via LiteLLM,
+        no GPU/vLLM, Caddy reverse proxy). THE FINAL PROJECT = v2.
+  - v2 is the CloudFormation port of v1 Terraform: "same architecture, no
+    LobeChat source modifications" (teacher's two verbal rules).
+
+  ONE-PARAGRAPH SUMMARY
+  - A single EC2 instance (Ubuntu 24.04, t3.xlarge, 60 GB gp3, encrypted) is
+    provisioned by a CloudFormation template (VPC, subnet, IGW, route table,
+    EIP, security group, SSH key pair, IAM role + instance profile, EC2). At
+    boot the UserData clones the repo and runs deploy/bootstrap.sh, which
+    installs Docker + Compose + AWS CLI, generates a .env with random secrets,
+    rewrites Casdoor URLs to public nip.io hostnames, and brings up a 10-service
+    docker-compose stack. Caddy terminates TLS (Let's Encrypt) on three nip.io
+    subdomains and is the ONLY service binding host ports (80/443). LobeChat
+    talks to LiteLLM, an OpenAI-compatible proxy that routes chat to AWS Bedrock
+    Claude models and embeddings to Bedrock Titan. The EC2 instance role grants
+    bedrock:InvokeModel; no API keys for the LLM are stored.
+
+  EXAM FRAMING / GRADING (from docs/FINAL-PROJECT.md §4)
+  - Practical (live LobeChat over HTTPS + REPORT.md)  = 30%
+  - Q1 Use case design                                = 17.5%
+  - Q2 3-environment architecture evolution           = 17.5%
+  - Q3 Cost model + unit economics                    = 17.5%
+  - Q4 Build vs buy memo                              = 17.5%
+  - Pass = average >= 2 (of 4 rubric levels) across the 4 questions AND
+    practical works. Practical capped at 50% if any §A.4 HTTPS item fails.
+
+
+==== 2. THE TWO ARCHITECTURES (TOP EXAM TRAP) ====
+
+  Do NOT confuse the documented "local stack" (CLAUDE.md / README.md still
+  describe v1 with vLLM/Gemma/Meridian and ports 4700x) with the DEPLOYED v2
+  (the docker-compose.yml that actually ships to EC2). The README/CLAUDE.md are
+  stale v1 docs; the live system is the Bedrock/Caddy/CloudFormation v2.
+
+  ORIGINAL / LOCAL STACK (v1, lobechat-aws):
+   - LLM: local vLLM container (image vllm/vllm-openai:gemma4) serving
+     google/gemma-4-E4B-it with native function calling
+     (--tool-call-parser gemma4 --reasoning-parser gemma4), on a GPU box.
+   - Optional Anthropic via "Meridian" bridge (http://wsl.ymbihq.local:3456),
+     registered in the ai_providers Postgres table.
+   - Embeddings via OpenRouter (OPENROUTER_API_KEY).
+   - Ports published on host: 47000 LobeChat, 47002 Casdoor, 47003 Postgres,
+     47005 MinIO API, 47006 MinIO Console, 47007 vLLM, 47008 MCPHub,
+     47010 Qdrant REST, 47011 Qdrant gRPC, 47012 Hayhooks REST, 47013 Hayhooks
+     MCP.
+   - linux-sandbox MCP container present (Ubuntu 24.04, user "oriol").
+   - patches/route.js source patch (MCP callTool retry) bind-mounted in.
+   - IaC: Terraform (terraform/*.tf).
+
+  DEPLOYED v2 (lobechat-aws-cfn) — THE FINAL PROJECT:
+   - LLM: NO vLLM, NO GPU. AWS Bedrock reached through a LiteLLM container
+     (OpenAI-compatible proxy). Chat = Claude (Haiku/Sonnet); embeddings =
+     Bedrock Titan v2.
+   - Caddy reverse proxy (image caddy:2-alpine) is the ONLY public service
+     (binds 80/443). All others are bridge-network-only (no host ports).
+   - Three public nip.io subdomains, each with its own Let's Encrypt cert.
+   - vLLM, linux-sandbox, the route.js patch and the OpenRouter dependency
+     are all REMOVED.
+   - IaC: CloudFormation (cloudformation/lobechat.yaml) — mandatory per teacher.
+
+  DIFFERENCE TABLE
+  -------------------------------------------------------------------------
+  Aspect            | v1 (local)                  | v2 (deployed, FINAL)
+  ------------------+-----------------------------+--------------------------
+  IaC tool          | Terraform                   | CloudFormation
+  LLM backend       | local vLLM + Gemma 4 E4B    | AWS Bedrock via LiteLLM
+  Embeddings        | OpenRouter                  | Bedrock Titan v2
+  GPU               | required                    | none (t3.xlarge CPU)
+  Reverse proxy     | none in compose (host ports)| Caddy (80/443 only)
+  HTTPS             | local / not enforced        | Let's Encrypt, 3 subdomains
+  Host port binding | all services 4700x          | only Caddy 80/443
+  Anthropic bridge  | Meridian                    | none (Bedrock direct)
+  linux-sandbox MCP | present                     | removed
+  route.js patch    | applied (MCP retry)         | removed (no source mods)
+  Credentials to LLM| API keys                    | EC2 IAM role (no keys)
+  -------------------------------------------------------------------------
+
+
+==== 3. THE 10 SERVICES (v2 docker-compose.yml) ====
+
+  Only CADDY binds host ports (80/443). Everything else is reachable only on
+  the docker bridge network. "docker compose ps" in REPORT shows exactly these
+  10 services up (postgres/minio/qdrant report healthy).
+
+  (1) caddy
+      image: caddy:2-alpine
+      ports: "80:80", "443:443"  (the ONLY published ports)
+      role: TLS termination + reverse proxy / host-based routing.
+      volumes: ./config/Caddyfile:/etc/caddy/Caddyfile:ro ;
+               ./data/caddy/data:/data ; ./data/caddy/config:/config (ACME state)
+      env: HOST_DOMAIN_LOBE, HOST_DOMAIN_AUTH, HOST_DOMAIN_S3
+      depends_on: lobe-chat (started), casdoor (started), minio (healthy)
+      restart: unless-stopped
+
+  (2) lobe-chat
+      image: lobehub/lobe-chat-database  (NO explicit tag => :latest)
+      internal port: 3210 (Caddy reverse_proxy lobe-chat:3210)
+      role: the chat application + agent runtime (Next.js, DB-backed).
+      key env:
+        APP_URL / NEXTAUTH_URL / AUTH_URL = https://${HOST_DOMAIN_LOBE}
+        DATABASE_URL = postgresql://postgres:<pw>@postgres:5432/lobechat
+        NEXT_AUTH_SSO_PROVIDERS=casdoor ; NEXT_AUTH_SECRET ; AUTH_TRUST_HOST=true
+        AUTH_CASDOOR_ISSUER=https://${HOST_DOMAIN_AUTH} ; AUTH_CASDOOR_ID/SECRET
+        S3_ENDPOINT=https://${HOST_DOMAIN_S3}   (= S3_PUBLIC_DOMAIN; the fix)
+        S3_PUBLIC_DOMAIN / NEXT_PUBLIC_S3_DOMAIN = https://${HOST_DOMAIN_S3}
+        S3_BUCKET=lobe ; S3_ACCESS_KEY_ID / S3_SECRET_ACCESS_KEY (MinIO creds)
+        S3_ENABLE_PATH_STYLE=1 ; S3_SET_ACL=0
+        KEY_VAULTS_SECRET (encrypts stored provider keys)
+        OPENAI_API_KEY=${LITELLM_MASTER_KEY} ; OPENAI_PROXY_URL=http://litellm:4000/v1
+        OPENAI_MODEL_LIST=-all,+claude-haiku-4-5,+claude-sonnet-4-5,
+                          +claude-sonnet-4-6,+titan-embed
+        DEFAULT_FILES_CONFIG=embedding_model=openai/titan-embed
+        LLM_VISION_IMAGE_USE_BASE64=1
+        FEATURE_FLAGS=-changelog,-check_updates
+      depends_on: postgres(healthy), casdoor(started), minio(healthy),
+                  litellm(started)
+      NOTE: v1's route.js patch + bind-mount removed here (no source mods rule).
+
+  (3) casdoor
+      image: casbin/casdoor:v2.13.0
+      internal port: 8000 (Caddy reverse_proxy casdoor:8000)
+      role: SSO / OAuth2 / OIDC identity provider.
+      env: RUNNING_IN_DOCKER=true ; driverName=postgres ;
+           dataSourceName=user=postgres password=<pw> host=postgres port=5432
+             sslmode=disable dbname=casdoor
+      command: /bin/sh -c './server --createDatabase=true'
+        (--createDatabase=true tells Casdoor to create its schema on first run)
+      volumes: ./data/casdoor/init_data.json:/init_data.json:ro ;
+               ./config/casdoor-app.conf:/conf/app.conf:ro
+      depends_on: postgres(healthy)
+
+  (4) postgres   (container_name: shared-postgres)
+      image: pgvector/pgvector:pg16   (Postgres 16 WITH pgvector extension)
+      internal port: 5432
+      role: operational DB shared by LobeChat (db "lobechat") and Casdoor
+            (db "casdoor").
+      env: POSTGRES_USER=postgres ; POSTGRES_PASSWORD ;
+           POSTGRES_INITDB_ARGS=-E UTF8 --locale=C
+      volumes: ./data/postgres:/var/lib/postgresql/data ;
+               ./config/init-postgres.sql -> /docker-entrypoint-initdb.d/01-init.sql
+      healthcheck: pg_isready -U postgres (10s/5s/5)
+      shm_size: 128mb
+
+  (5) minio
+      image: minio/minio:latest
+      internal ports: 9000 (S3 API), 9001 (console, --console-address ":9001")
+      role: S3-compatible object storage for uploaded files.
+      env: MINIO_ROOT_USER (deploy sets =lobechat), MINIO_ROOT_PASSWORD,
+           MINIO_API_CORS_ALLOW_ORIGIN=https://${HOST_DOMAIN_LOBE},
+           MINIO_REGION_NAME=us-east-1   (stable region for consistent signing)
+      command: server /data --console-address ":9001"
+      healthcheck: ["CMD","mc","ready","local"] (10s/5s/5)
+
+  (6) qdrant
+      image: qdrant/qdrant:latest
+      internal ports: 6333 (REST), 6334 (gRPC)
+      role: dedicated vector DB for RAG corpora (collection "rag-demo").
+      volumes: ./data/qdrant:/qdrant/storage
+      healthcheck: bash -c ':> /dev/tcp/127.0.0.1/6333' (30s/5s/5)
+
+  (7) mcphub   (BUILT locally, not pulled)
+      build: context ., dockerfile dockerfiles/mcphub.Dockerfile
+      image tag: lobechat-aws-mcphub:latest
+      internal port: 3000 (LobeChat reaches it at http://mcphub:3000/mcp/<key>)
+      role: MCP aggregator/proxy — mounts ~12 MCP servers behind one endpoint.
+      env: SSH_* (left empty in this deploy), AWS_REGION/AWS_DEFAULT_REGION,
+           OPENAPI_MCP_HEADERS
+      volumes: ./config/mcp_settings.json:/app/mcp_settings.json ;
+               ./data/mcphub:/app/data ; ./config/ssh:/app/ssh:ro ;
+               /var/run/docker.sock:/var/run/docker.sock  (to spawn d2 container)
+
+  (8) litellm
+      image: ghcr.io/berriai/litellm:main-latest
+      internal port: 4000 (LobeChat OPENAI_PROXY_URL=http://litellm:4000/v1)
+      role: OpenAI-compatible proxy that translates to AWS Bedrock.
+      env: LITELLM_MASTER_KEY ; AWS_REGION / AWS_DEFAULT_REGION (default eu-west-1)
+      volumes: ./config/litellm-config.yaml:/app/config.yaml:ro
+      command: --config /app/config.yaml --port 4000 --host 0.0.0.0
+
+  (9) hayhooks
+      image: deepset/hayhooks:v1.1.0
+      internal port: 1416 (HAYHOOKS_PORT=1416)
+      role: Haystack pipelines served as REST (FastAPI + Swagger /docs).
+      env: HAYHOOKS_HOST=0.0.0.0 ; HAYHOOKS_PORT=1416 ; QDRANT_URL=http://qdrant:6333
+      depends_on: qdrant(healthy)
+
+  (10) hayhooks-mcp
+      image: deepset/hayhooks:v1.1.0  (SAME image as hayhooks)
+      internal port: 1417
+      role: the SAME Haystack pipelines exposed as an MCP server (one backend,
+            two interfaces — 1416 REST / 1417 MCP).
+      entrypoint: ["sh","-c"]
+      command: pip install --no-cache-dir 'hayhooks[mcp]==1.1.0' &&
+               exec hayhooks mcp run --host 0.0.0.0 --port 1417 --json-response
+        (installs the optional [mcp] extra at start because the base image
+         does not ship it)
+      env: QDRANT_URL=http://qdrant:6333
+      depends_on: qdrant(healthy)
+
+  EXAM NOTES on the 10 services:
+   - The two "Hayhooks" are the SAME image/pipelines, just two transports
+     (1416 REST, 1417 MCP). hayhooks-mcp is registered IN MCPHub as
+     "haystack-mcp".
+   - postgres container_name = shared-postgres (shared by lobechat + casdoor).
+   - postgres image is pgvector/pgvector:pg16 (pgvector PRESENT but UNUSED for
+     the RAG path — Qdrant does RAG).
+   - MinIO region is us-east-1 (signing), CORS origin is the LobeChat host.
+   - mcphub is the only image BUILT on the box; it talks docker.sock.
+
+
+==== 4. DATA LAYER ====
+
+  THREE stores, clean separation of concerns:
+   - POSTGRES (shared-postgres, pgvector/pgvector:pg16):
+       * db "lobechat": users, sessions, messages, agent configs,
+         ai_providers, user_installed_plugins (MCP plugin rows), etc.
+       * db "casdoor": Casdoor identity data.
+       * init-postgres.sql creates BOTH databases and runs
+         `\c lobechat; CREATE EXTENSION IF NOT EXISTS vector;` (pgvector enabled
+         on lobechat but NOT used for RAG retrieval here).
+   - MINIO: raw uploaded files (PDFs, images, attachments), agent-generated
+     artifacts. Bucket "lobe" (created by bootstrap via `mc mb -p local/lobe`
+     then `mc anonymous set download local/lobe` for public read).
+   - QDRANT: embedding vectors for RAG (collection "rag-demo", HNSW index,
+     payload filtering, better recall/latency at scale than pgvector here).
+
+  RAG FLOW:
+   - Ingest: documents -> chunked -> embedded -> stored in Qdrant rag-demo.
+   - Query: prompt -> embedded -> nearest-neighbour search in Qdrant -> top-k
+     chunks -> injected into the LLM prompt as context.
+   - Path: LobeChat -> MCPHub -> qdrant-mcp -> Qdrant rag-demo
+            (or LobeChat -> MCPHub -> haystack-mcp -> Hayhooks -> Qdrant).
+   - In v2 the embedding model for LobeChat's file feature is Bedrock Titan v2
+     via LiteLLM alias "titan-embed"
+     (DEFAULT_FILES_CONFIG=embedding_model=openai/titan-embed).
+
+  THE MIXED-CONTENT FIX (S3_ENDPOINT = S3_PUBLIC_DOMAIN):
+   - LobeChat does NOT rewrite the host between the server-side S3_ENDPOINT and
+     the browser-facing S3_PUBLIC_DOMAIN. The presigned URL the S3 SDK generates
+     is handed to the browser AS-IS.
+   - If S3_ENDPOINT=http://minio:9000 (internal), the browser is told to PUT to
+     an internal HTTP URL while the page is served over HTTPS -> Chrome blocks
+     it with "Mixed Content".
+   - Fix: set S3_ENDPOINT = S3_PUBLIC_DOMAIN = NEXT_PUBLIC_S3_DOMAIN =
+     https://${HOST_DOMAIN_S3}. The container reaches its own public host via
+     the EC2 NAT loopback (docker DNS + elastic IP). MINIO_REGION_NAME=us-east-1
+     keeps signing consistent. Do NOT split S3_ENDPOINT from S3_PUBLIC_DOMAIN.
+
+
+==== 5. AI & TOOLS ====
+
+  LITELLM model_list (config/litellm-config.yaml) — EXACT:
+   - claude-haiku-4-5  -> bedrock/eu.anthropic.claude-haiku-4-5-20251001-v1:0
+                          aws_region_name: eu-west-1 ; additional_drop_params:["top_p"]
+   - claude-sonnet-4-5 -> bedrock/eu.anthropic.claude-sonnet-4-5-20250929-v1:0
+                          aws_region_name: eu-west-1 ; additional_drop_params:["top_p"]
+   - claude-sonnet-4-6 -> bedrock/eu.anthropic.claude-sonnet-4-6
+                          aws_region_name: eu-west-1 ; additional_drop_params:["top_p"]
+   - titan-embed       -> bedrock/amazon.titan-embed-text-v2:0
+                          aws_region_name: eu-west-1   (embeddings for files)
+   general_settings.master_key: os.environ/LITELLM_MASTER_KEY
+   litellm_settings: drop_params: true ; set_verbose: false ; telemetry: false
+   - The "eu." prefix = EU cross-region INFERENCE PROFILE (fans out to several
+     EU regions). additional_drop_params:["top_p"] per model because Bedrock
+     Claude rejects requests with BOTH temperature and top_p; LobeChat sends
+     both, so top_p is dropped (the global drop_params:true does not catch the
+     "both specified" combo rule, hence the per-model setting).
+   - master_key via os.environ keeps the secret out of the YAML file.
+   - Titan is the only embed model and needs NO Bedrock use-case form (only
+     Anthropic gates on the use-case questionnaire).
+
+  WHO DECIDES TO CALL A TOOL:
+   - THE LLM decides, via function calling. At each turn LobeChat injects the
+     available tool list (from MCPHub's catalog). If the prompt needs external
+     data/side effects, the model emits a tool_call JSON block instead of text.
+     LobeChat catches it, routes to MCPHub, runs the tool, returns the result,
+     and the model continues. No tool need -> plain answer, no MCP traffic.
+   - MCPHub does NOT talk to the LLM. It is a tool-EXECUTION layer.
+     Order: prompt -> LLM -> (maybe) tool via MCPHub -> LLM again -> answer.
+
+  MCP vs MCPHub:
+   - Standard MCP = one client <-> one server (stdio or HTTP), JSON-RPC schema.
+   - MCPHub = AGGREGATOR/PROXY: mounts ~12 MCP servers behind ONE HTTP endpoint,
+     multiplexes tool listings, handles auth/secrets, supervises stdio child
+     processes. Without it LobeChat would manage N separate connections.
+
+  THE ~12 MCP SERVERS (config/mcp_settings.json) and transports:
+   - ssh-exec               stdio  (uvx mcp-science ssh-exec; command whitelist)
+   - notion-mcp             stdio  (npx @notionhq/notion-mcp-server; OPENAPI_MCP_HEADERS)
+   - aws-resources-operations stdio (uvx git+...mcp-server-aws-resources-python; boto3)
+   - filesystem             stdio  (npx @modelcontextprotocol/server-filesystem /)
+   - playwright             stdio  (npx @playwright/mcp@latest; browser automation)
+   - pickstar-2002-minio-mcp stdio (npx @pickstar-2002/minio-mcp; MinIO ops)
+   - d2                     stdio  (docker run ghcr.io/h0rv/d2-mcp:main; needs docker.io)
+   - infrastructure-diagrams stdio (uvx infrastructure-diagram-mcp-server; needs graphviz)
+   - qdrant-mcp             stdio  (uvx mcp-server-qdrant; collection rag-demo,
+                                    EMBEDDING_MODEL sentence-transformers/all-MiniLM-L6-v2)
+   - haystack-mcp           streamable-http  (url http://hayhooks-mcp:1417/mcp)
+   - linux-sandbox          stdio  (docker exec ... linux-sandbox ...)  [v1 only; no
+                                    such container in v2 deploy]
+   - aws-documentation      stdio  (uvx awslabs.aws-documentation-mcp-server)
+   EXAM POINT: ALL MCP servers use stdio EXCEPT haystack-mcp, which is
+   streamable-http (because hayhooks-mcp is already a long-running HTTP service
+   exposing /mcp).
+
+  WHY MCPHUB NEEDS A CUSTOM DOCKERFILE (dockerfiles/mcphub.Dockerfile):
+   - FROM samanhappy/mcphub:latest ; USER root ; apt-get install
+     graphviz libgraphviz-dev gcc docker.io.
+   - stdio MCP servers run as CHILD PROCESSES inside the mcphub container and
+     need system deps not in the upstream image: graphviz + libgraphviz-dev
+     (pygraphviz for the `diagrams` package), gcc (compile native deps),
+     docker.io (to `docker run` the d2-mcp container-in-container).
+   - The fix is to EXTEND the Dockerfile, never to mutate the running container.
+
+  THE STDIO WEAKNESS (key "why"):
+   - stdio MCP sessions can go stale/terminate; LobeChat may reuse a stale
+     mcp-session-id and jump straight to tools/call -> server replies 400
+     "Bad Request: No valid session ID provided" / "Server not initialized".
+   - v1 fixed this with patches/route.js (added retry+session reinit to
+     callTool, mirroring listTools). v2 REMOVED that patch (no source mods), so
+     the MCP demo must be fired EARLY after a fresh boot while sessions are warm.
+
+  LOBECHAT AS AGENT: LobeChat is the agent RUNTIME (system prompt, tool list,
+  multi-turn loop, session state, termination). The "thinking" lives in the LLM;
+  LobeChat orchestrates the loop and tool dispatch.
+
+
+==== 6. NETWORKING / PROXY / AUTH ====
+
+  CADDY (image caddy:2-alpine):
+   - Only public ports: 80 and 443. {admin off}.
+   - Three host blocks (each gets its OWN Let's Encrypt cert via ACME HTTP-01):
+       {$HOST_DOMAIN_LOBE} -> reverse_proxy lobe-chat:3210
+            (header_up Host {host}; X-Forwarded-Proto https; read_timeout 300s;
+             keepalive 300s — long timeouts for SSE streaming)
+       {$HOST_DOMAIN_AUTH} -> reverse_proxy casdoor:8000
+       {$HOST_DOMAIN_S3}   -> reverse_proxy minio:9000
+   - :80 catch-all -> `respond "Misdirected Request" 421` (rejects any host that
+     does not match an expected hostname; this is why a raw IP returns 421).
+   - nip.io: any <dashed-ip>.nip.io resolves to the embedded IP, so Caddy can
+     get a cert per hostname at boot (port 80 open for HTTP-01).
+   - Three subdomains:
+       <ip>.nip.io       -> LobeChat
+       auth-<ip>.nip.io  -> Casdoor
+       s3-<ip>.nip.io    -> MinIO
+     Casdoor + MinIO are split onto sibling subdomains because Casdoor's React
+     frontend hardcodes absolute /static and /api asset URLs (path-prefix
+     conflicts), and MinIO's S3 signature breaks if a path prefix is stripped.
+
+  WHY HTTPS IS MANDATORY (docs/FINAL-PROJECT.md §A.1):
+   1. Casdoor SSO + OAuth callback: browsers refuse cross-site cookies
+      (SameSite/Secure) on plain HTTP -> login silently fails.
+   2. MCP transports + WebSocket/SSE streaming: mixed-content rules block them
+      on HTTP origins.
+   3. Real-world DevOps posture (graded on production discipline).
+   - A raw IP on port 47000 fails all three; v2 closes 47000 and exposes only
+     80/443. Public CAs will NOT issue certs for raw IPs or for
+     *.compute.amazonaws.com / *.elb.amazonaws.com; self-signed is rejected.
+     Hence a controllable hostname (nip.io) + Let's Encrypt.
+
+  CASDOOR (casbin/casdoor:v2.13.0):
+   - Started with `./server --createDatabase=true` (creates its DB schema).
+   - app.conf: httpport=8000, runmode=dev, driverName=postgres, dbName=casdoor,
+     origin (rewritten at boot to https://<auth-host>), staticBaseUrl cdn.casbin.org.
+   - LOGIN ACCOUNTS (TRAP): the LobeChat sign-in account is
+        org "lobechat", user "user", password "pswd123".
+     The "admin / pswd123" account exists ONLY in the "built-in" org, which
+     LobeChat does NOT use -> trying admin in the lobechat flow fails.
+   - bootstrap.sh sed-rewrites init_data.json + casdoor-app.conf from the local
+     wsl.ymbihq.local URLs to the public HTTPS hostnames so OAuth redirect_uri
+     matches; AUTH_CASDOOR_ID/SECRET are extracted from the seeded "lobechat"
+     OAuth app via jq.
+
+
+==== 7. THE CLOUDFORMATION TEMPLATE (cloudformation/lobechat.yaml) ====
+
+  AWSTemplateFormatVersion: "2010-09-09".
+
+  PARAMETERS:
+   - ProjectName (default lobechat), Environment (dev|stage|prod, default dev),
+     Owner (lorena.pinillos).
+   - AmiId : type AWS::EC2::Image::Id — NOT hardcoded; deploy.sh resolves the
+     latest Canonical Ubuntu 24.04 via ec2:DescribeImages and passes it in
+     (the native AWS::SSM::Parameter::Value<Image::Id> route is blocked).
+   - InstanceType (default t3.xlarge = 4 vCPU / 16 GB; spec needs >=4 vCPU/16GB).
+   - RootVolumeSizeGb (default 60, MinValue 60).
+   - AllowedSshCidr (pattern x.x.x.x/yy; deploy.sh auto-detects operator IP/32).
+   - SshPublicKey (the operator public key contents).
+   - RepoUrl (default github.com/lorepinillos/lobechat-aws-cfn.git), RepoRef (main).
+
+  RESOURCES (every one):
+   - Vpc                AWS::EC2::VPC, CidrBlock 10.0.0.0/16,
+                        EnableDnsSupport + EnableDnsHostnames true.
+   - InternetGateway    AWS::EC2::InternetGateway.
+   - VpcGatewayAttachment  attaches IGW to the VPC (separate resource).
+   - PublicSubnet       10.0.1.0/24, AZ !Select [0,!GetAZs ""],
+                        MapPublicIpOnLaunch: true.
+   - PublicRouteTable.
+   - DefaultPublicRoute AWS::EC2::Route, DependsOn VpcGatewayAttachment,
+                        DestinationCidrBlock 0.0.0.0/0 -> GatewayId IGW.
+   - PublicSubnetRouteTableAssociation  subnet <-> route table.
+   - InstanceSecurityGroup:
+        ingress 22 from AllowedSshCidr (operator), 80 from 0.0.0.0/0
+        (Caddy redirect + ACME HTTP-01), 443 from 0.0.0.0/0;
+        egress: all (-1) to 0.0.0.0/0.
+   - OperatorKeyPair    AWS::EC2::KeyPair (imports SshPublicKey).
+   - InstanceEIP        AWS::EC2::EIP (Domain: vpc) — allocated UP FRONT so
+                        UserData can derive the nip.io hostname.
+   - InstanceRole       AWS::IAM::Role, assumed by ec2.amazonaws.com, with an
+                        INLINE policy "bedrock-invoke" (see below).
+   - InstanceProfile    AWS::IAM::InstanceProfile wrapping InstanceRole.
+   - Instance           AWS::EC2::Instance, DependsOn VpcGatewayAttachment:
+        ImageId !Ref AmiId, InstanceType, SubnetId PublicSubnet,
+        SecurityGroupIds [InstanceSecurityGroup], KeyName OperatorKeyPair,
+        IamInstanceProfile InstanceProfile.
+        BlockDeviceMappings: /dev/sda1, VolumeType gp3, VolumeSize 60,
+          DeleteOnTermination true, Encrypted true.
+        MetadataOptions:
+          HttpEndpoint enabled ; HttpTokens required (== IMDSv2 enforced) ;
+          HttpPutResponseHopLimit 2.
+        UserData (Fn::Base64 !Sub): apt install ca-certificates curl git;
+          git clone --branch ${RepoRef} --depth 1 ${RepoUrl} /opt/lobechat;
+          export AWS_REGION/PUBLIC_IP(=${InstanceEIP})/REPO_URL/REPO_REF;
+          exec /opt/lobechat/deploy/bootstrap.sh.
+   - InstanceEIPAssociation  AWS::EC2::EIPAssociation
+        (AllocationId !GetAtt InstanceEIP.AllocationId, InstanceId Instance).
+
+  WHY HttpPutResponseHopLimit: 2:
+   - Containers reach IMDS (the instance metadata service, 169.254.169.254) via
+     the docker bridge -> host, i.e. ONE extra network hop. The default hop
+     limit of 1 blocks that. Bumping to 2 lets LiteLLM/MCPHub boto3 pick up the
+     instance role credentials. HttpTokens: required = IMDSv2 (token-based,
+     anti-SSRF).
+
+  THE bedrock-invoke IAM POLICY (exact Sids/actions/resources):
+   - Sid InvokeInferenceProfiles: Allow bedrock:InvokeModel,
+     bedrock:InvokeModelWithResponseStream on
+     arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/*
+   - Sid InvokeUnderlyingFoundationModels: same two actions on
+       arn:aws:bedrock:*::foundation-model/anthropic.*  and
+       arn:aws:bedrock:*::foundation-model/amazon.titan-embed-*
+     (cross-region inference profiles fan out to the underlying model in every
+      EU region, so the model resource is granted broadly).
+   - Sid ListAndDescribe: Allow bedrock:ListFoundationModels,
+     ListInferenceProfiles, GetInferenceProfile, GetFoundationModel on "*".
+
+  OUTPUTS:
+   - InstanceId (!Ref Instance).
+   - PublicIp = !Ref InstanceEIP  (Ref on an EIP returns the IP STRING).
+   - HttpsUrl = https://<dashed-ip>.nip.io (Dashed = Join "-" Split "." EIP).
+   - AuthUrl  = https://auth-<dashed-ip>.nip.io.
+   - S3Url    = https://s3-<dashed-ip>.nip.io.
+   - SshCommand = ssh ubuntu@<EIP>.
+
+  DEPLOY requires CAPABILITY_NAMED_IAM (the template creates NAMED IAM
+  resources: the role/profile have explicit RoleName/InstanceProfileName).
+
+
+==== 8. DEPLOY SCRIPTS ====
+
+  cloudformation/deploy.sh (runs on the operator's laptop):
+   - Defaults: STACK_NAME=lobechat-dev, AWS_PROFILE=esade, AWS_REGION=eu-west-1,
+     SSH_PUBKEY_PATH=~/.ssh/id_ed25519.pub, REPO_REF=main.
+   - Step 1: resolve AMI via `aws ec2 describe-images --owners 099720109477`
+     (Canonical) filtering name ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64
+     -server-*, state available, x86_64, hvm; query reverse(sort_by(...
+     CreationDate))[0].ImageId. (Done because ssm:GetParameter is DENIED.)
+   - Step 2: detect operator IP via `curl https://checkip.amazonaws.com` -> /32.
+   - Step 3: read SSH public key file.
+   - Step 4: `cloudformation validate-template`.
+   - Step 5: `cloudformation deploy ... --capabilities CAPABILITY_NAMED_IAM
+     --parameter-overrides AmiId/AllowedSshCidr/SshPublicKey/RepoUrl/RepoRef
+     --tags Project/Environment/Owner/ManagedBy --no-fail-on-empty-changeset`.
+   - Step 6: print stack Outputs as a table.
+   - DESTROY: `cloudformation delete-stack --stack-name lobechat-dev`
+     (bills ~EUR0.20/h: EC2 + EIP + 60GB EBS).
+
+  deploy/bootstrap.sh (runs ON the EC2 at boot, invoked by UserData):
+   - Inputs (env): AWS_REGION, PUBLIC_IP (=EIP), REPO_URL, REPO_REF.
+   - Derives IP_DASHED=${PUBLIC_IP//./-} and the three nip.io hostnames.
+   - STAGE 1 (Docker + Compose + AWS CLI):
+       apt install ca-certificates curl gnupg jq unzip git make openssl;
+       add Docker apt repo + keyring; install docker-ce, docker-ce-cli,
+       containerd.io, docker-buildx-plugin, docker-compose-plugin;
+       systemctl enable --now docker; usermod -aG docker ubuntu;
+       install AWS CLI v2; verify with `aws sts get-caller-identity`
+       (prints the instance role ARN — confirms IMDS hop-limit works).
+   - STAGE 2 (app deploy):
+       chown repo to ubuntu; mkdir Caddy ACME dirs;
+       sed-rewrite config/init_data.json -> data/casdoor/init_data.json
+         (wsl.ymbihq.local:47000 -> https://<lobe>; :47002 -> https://<auth>;
+          localhost:3210 -> https://<lobe>);
+       sed -i casdoor-app.conf origin -> https://<auth>;
+       GENERATE secrets: KEY_VAULTS_SECRET=openssl rand -base64 32 ;
+         NEXT_AUTH_SECRET=openssl rand -base64 32 ;
+         POSTGRES_PASSWORD=openssl rand -hex 16 ;
+         MINIO_ROOT_PASSWORD=openssl rand -hex 16 ;
+         LITELLM_MASTER_KEY=sk-$(openssl rand -hex 24) ;
+       jq-extract AUTH_CASDOOR_ID/SECRET from the seeded "lobechat" app;
+       write /opt/lobechat/.env (MINIO_ROOT_USER=lobechat, S3_BUCKET=lobe,
+         SSH_* empty); chmod 0600; chown ubuntu;
+       `docker compose --env-file .env up -d --build` as user ubuntu;
+       wait for MinIO healthcheck, then `mc alias set` + `mc mb -p local/lobe`
+       + `mc anonymous set download local/lobe`.
+   - Logs: /var/log/userdata.log (UserData wrapper),
+           /var/log/bootstrap.log (the real bootstrap). Boot ~8-12 min.
+
+
+==== 9. THE TWO SANDBOX DEVIATIONS + TEACHER'S VERBAL RULES ====
+
+  Both deviations are FORCED by the ESADE sandbox IAM role (verified live
+  2026-05-30) and are documented in docs/evidence/REPORT.md §8:
+
+  (1) AMI via ec2:DescribeImages, NOT the SSM public parameter.
+      - The spec suggests resolving the Ubuntu AMI through Canonical's public
+        SSM parameter. The sandbox role DENIES ssm:GetParameter even on that
+        public parameter, so the native AWS::SSM::Parameter::Value<Image::Id>
+        type would make stack CREATE fail (rollback). Instead deploy.sh resolves
+        the latest image via ec2:DescribeImages (allowed) and passes AmiId. NO
+        AMI is hardcoded — the lookup is dynamic, matching the spec's intent
+        (same as v1 Terraform's aws_ami data source).
+
+  (2) Secrets on the encrypted EBS volume, NOT SSM / Secrets Manager.
+      - The role denies BOTH ssm:* and secretsmanager:CreateSecret, so neither
+        named secret store works. bootstrap.sh writes generated secrets to
+        /opt/lobechat/.env (root:root historically; deploy chmod 0600) on the
+        encrypted gp3 volume. (v1 secrets.tf is an intentionally empty stub.)
+
+  TEACHER'S TWO VERBAL RULES (v2 complies; v1 did not):
+   - CloudFormation is MANDATORY (so v1 Terraform was ported to CFN).
+   - NO modifications to LobeChat source / shipped code -> the v1 patches/route.js
+     MCP-retry patch was REMOVED. The MCP demo is fired early after a fresh boot
+     while MCP sessions are still warm; the upstream retry limitation is just
+     documented.
+
+
+==== 10. THEORY, AS APPLIED ====
+
+  DEVOPS / MLOPS
+   - DevOps = culture+practice unifying Dev and Ops to ship faster + reliably.
+   - CALMS: Culture, Automation, Lean, Measurement, Sharing.
+   - The Three Ways (Phoenix Project): (1) Flow/systems thinking left->right;
+     (2) Amplify feedback loops right->left; (3) Continual experimentation +
+     learning.
+   - DORA metrics: Deployment Frequency, Lead Time for Changes, Change Failure
+     Rate, Mean Time to Restore (MTTR).
+   - MLOps = DevOps applied to ML: also versions DATA + MODELS, handles training
+     pipelines, model registry, drift/monitoring, reproducibility. (Here:
+     LiteLLM/Bedrock means "buy the model"; no training pipeline in scope.)
+
+  GITHUB
+   - PR (pull request) = propose merging a branch; gets review + CI before merge.
+   - Fork = your own server-side copy of a repo (submission is a private fork).
+   - SemVer MAJOR.MINOR.PATCH: breaking / feature / fix. Commitizen
+     (cz bump) computes the bump from conventional commits; tag_format v$version
+     (e.g. final-vX.Y.Z). major_version_zero=true here (0.x).
+   - Conventional commits: type(scope): desc; feat/fix/docs/style/refactor/test/
+     build/ci/chore; "!" = breaking. Validated by a .githooks/commit-msg hook.
+   - Secrets: NEVER in git. Use a secret store / GitHub Actions secrets;
+     .gitignore excludes .env, data/, keys.
+   - Tags = immutable named commits (releases).
+
+  CI/CD
+   - CI = Continuous Integration: merge + build + automated tests on every push.
+   - Continuous DELIVERY = always release-ready, deploy is a manual button.
+   - Continuous DEPLOYMENT = every passing change auto-deploys to prod.
+   - Test pyramid: many fast unit tests, fewer integration, fewest slow E2E.
+   - GitHub Actions vocabulary:
+       workflow (a .yml in .github/workflows) -> contains jobs -> each job runs
+       on a runner (VM) -> a job has steps (each step = a shell command or an
+       `uses:` action). `needs:` makes one job wait for another (e.g. release
+       needs ci). `workflow_dispatch` = manual trigger button. `matrix` = run
+       the same job across combinations (OS/versions). Caching speeds repeat
+       runs (e.g. dependency cache). In THIS repo's history (v1.x) a CI workflow
+       did type-check + ESLint with workflow_dispatch + a 15-min timeout, and a
+       release workflow used `needs: ci`.
+
+  INFRASTRUCTURE AS CODE (IaC)
+   - Declarative (describe desired state; tool figures out how) — Terraform,
+     CloudFormation. vs Imperative (script the steps) — e.g. raw bash UserData.
+   - Idempotency: re-applying yields the same result, no duplicate resources.
+   - STATE: Terraform keeps a state file (terraform.tfstate) mapping config to
+     real resources; CloudFormation keeps state SERVER-SIDE (the stack).
+   - Drift = real infra diverging from the declared state.
+   - Immutable infra: replace, don't mutate (v1 used user_data_replace_on_change
+     to recreate the box on UserData change).
+   - Terraform (HashiCorp, HCL, multi-cloud, external state) vs CloudFormation
+     (AWS-native, YAML/JSON, AWS-managed state, change sets, rollback on
+     failure). This project ports Terraform -> CloudFormation (teacher rule).
+   - Rollback: CloudFormation auto-rolls-back a failed CREATE/UPDATE.
+   - Change sets: preview what a CFN update will do before applying.
+
+  DOCKER
+   - Image = read-only template (built from a Dockerfile, made of layers).
+     Container = a running instance of an image.
+   - Layers: each Dockerfile instruction = a cached layer; order matters for
+     cache reuse.
+   - Dockerfile instructions: FROM (base), RUN (build-time command), COPY/ADD,
+     ENV, WORKDIR, EXPOSE (documents a port; does NOT publish it), USER,
+     ENTRYPOINT (the fixed executable), CMD (default args / default command).
+     CMD vs ENTRYPOINT: ENTRYPOINT is the program, CMD provides default
+     arguments; `docker run` args override CMD. (sandbox.Dockerfile sets
+     ENTRYPOINT-style CMD ["/usr/local/bin/sandbox-entrypoint.sh"]; hayhooks-mcp
+     overrides entrypoint to ["sh","-c"].)
+   - EXPOSE vs ports: EXPOSE is metadata; actual publishing is `ports:` in
+     compose / `-p` in run. In v2 ONLY caddy has `ports:`; all others are
+     bridge-only (EXPOSE-level reachability via service DNS).
+   - Registries: Docker Hub (lobehub/, casbin/, minio/, qdrant/, deepset/),
+     GHCR (ghcr.io/berriai/litellm, ghcr.io/h0rv/d2-mcp).
+   - :latest is a MOVING tag (not reproducible) — minio/qdrant use it here;
+     casdoor/hayhooks are pinned (v2.13.0, v1.1.0) for reproducibility.
+   - Multi-stage build: build in one stage, copy artifacts to a slim final
+     image (smaller, fewer build tools in prod).
+   - Volumes vs bind mounts: named volumes are Docker-managed; bind mounts map a
+     host path (e.g. ./config/Caddyfile, /var/run/docker.sock) into the
+     container. Here all persistence is bind mounts under ./data.
+   - Networks/DNS: compose puts all services on one bridge network where the
+     SERVICE NAME resolves (lobe-chat reaches http://litellm:4000, Caddy reaches
+     lobe-chat:3210, etc.). That is why nothing needs host ports except Caddy.
+
+  ANSIBLE
+   - Agentless (push over SSH; no daemon on targets) — contrast Chef/Puppet
+     (agent + pull). Idempotent modules (declare desired state).
+   - Vocabulary: inventory (hosts) ; playbook (YAML) ; play (maps hosts->tasks);
+     task (one module call) ; module (the unit of work, e.g. apt, copy, get_url,
+     command) ; handler (runs only when notified, e.g. restart on change) ;
+     role (reusable bundle of tasks/templates/vars) ; Jinja2 (templating) ;
+     become (privilege escalation / sudo).
+   - Provision (create infra — Terraform/CFN) vs Configure (set up software on
+     existing hosts — Ansible). In the v1 repo's v4.x stage, deployment was a
+     TWO-PHASE flow: CloudFormation creates the infra, then Ansible configures
+     the EC2 over SSH. (v2 collapses configuration back into bootstrap.sh.)
+
+  KUBERNETES (scope ends here)
+   - Pod = smallest deployable unit (1+ containers sharing network/storage).
+   - Deployment = declares desired replicas of pods, does rolling updates.
+   - Service = stable virtual IP/DNS + load-balancing across pods.
+   - Node = a worker machine in the cluster.
+   - Self-healing (restarts/reschedules failed pods), horizontal scaling,
+     rolling updates (zero-downtime), declarative desired state.
+   - Why over Compose: Compose = single host, no self-healing/scaling/rolling
+     updates across machines; K8s orchestrates many nodes.
+   - K8s does NOT replace the container RUNTIME (containerd/CRI-O still run the
+     containers); it ORCHESTRATES them. This stack runs on Compose, not K8s.
+
+
+==== 11. EVOLUTION / HOMEWORK BUILD-UP (v1.x -> main -> v2) ====
+
+  Each stage fixes the previous stage's limitation. Branches in the
+  lobechat-aws repo (verified via gh compare):
+
+  - v1.x  CI: add a basic GitHub Actions workflow (clone LobeChat, type-check,
+          ESLint, workflow_dispatch, 15-min timeout) + a release workflow
+          (needs: ci, build archives) + commitlint + CONTRIBUTING.md. Many
+          "docs: add <student> to homework" PRs (the GitHub Actions practice).
+          WHY: teach version control + automated checks (the "I" of CI).
+
+  - v2.x  IaC #1: add CloudFormation (infra/cloudformation.yml: VPC, EC2,
+          PostgreSQL, MinIO, LobeChat) + a deploy.yml workflow; later simplified
+          to MANUAL CloudFormation deploy. WHY: move from "runs on my laptop"
+          to reproducible infrastructure as code; add cost warnings + mandatory
+          cleanup.
+
+  - v3.x  Ansible two-phase: replace UserData with an Ansible playbook
+          (Postgres, MinIO, Node.js, LobeChat); CFN becomes infra-only.
+          Deployment = (1) CFN creates infra, (2) Ansible configures via SSH.
+          Adds pyproject Ansible >=11 via uv, ansible-lint in CI. WHY: separate
+          PROVISION from CONFIGURE; idempotent config management.
+
+  - v4.x  Release discipline / Docker packaging: commitizen versioning
+          (.githooks/commit-msg, auto-changelog); then a Docker/GHCR path
+          (build LobeChat image, push to ghcr.io, CFN UserData deploys via
+          docker compose). CFN-variable escaping with ${!Literal}. WHY: clean
+          release/versioning + portable images.
+
+  - v5.x  Full feature stack: custom mcphub image (graphviz/gcc/docker.io),
+          vLLM Gemma 4 E4B with native function calling, Qdrant + Hayhooks
+          (REST + MCP) RAG, five new MCP servers, linux-sandbox, db migrations
+          (dbmate + Flyway), MCP onboarding + agent docs. WHY: build the actual
+          AI platform (RAG, tools, agents).
+
+  - main  Cloud production: the final-project spec (docs/FINAL-PROJECT.md),
+          REPORT template, q1..q4 placeholders, student-qa.md, AND the AWS
+          deploy story: Terraform scaffold (eu-west-1, t3.xlarge, 60GB gp3,
+          EIP, Bedrock IAM); REPLACE vLLM with Bedrock+LiteLLM + add Caddy
+          HTTPS; switch traefik.me -> sslip.io -> nip.io with Caddy auto-LE;
+          split Casdoor+MinIO onto own subdomains; add Titan embeddings for
+          file uploads; drop top_p; fix S3_ENDPOINT mixed content. WHY: ship a
+          real production HTTPS deployment.
+
+  - OUR v2 (lobechat-aws-cfn): the CloudFormation PORT of the main Terraform
+          stack — same architecture, CloudFormation mandatory, route.js removed
+          (no source mods). This is what is graded.
+
+  STORY ARC: app -> CI -> IaC (CFN) -> config mgmt (Ansible) -> release
+  discipline + Docker images -> full AI features (RAG/MCP) -> cloud production
+  over HTTPS.
+
+
+==== 12. GOTCHAS / "WHY DOES THIS ERROR" (from DEPLOY-STATUS.md §5) ====
+
+  - "Mixed Content" on file upload: S3_ENDPOINT != public host (browser got an
+    internal http://minio:9000 URL). Fix: S3_ENDPOINT=https://${HOST_DOMAIN_S3}
+    = S3_PUBLIC_DOMAIN. Don't split them.
+  - "Model use case details have not been submitted" (BedrockException): the
+    Anthropic per-account use-case form is not filled. Console -> Bedrock ->
+    eu-west-1 -> Model access -> request Anthropic -> fill the questionnaire ->
+    ~15 min. (Titan needs no form.)
+  - "temperature and top_p cannot both be specified": LobeChat sends both;
+    Bedrock Claude rejects. Fixed by additional_drop_params:["top_p"] per model.
+  - Container can't reach IMDS / "Unable to locate credentials": default IMDS
+    hop limit 1 blocks bridge->host. Fixed by HttpPutResponseHopLimit: 2.
+  - admin login fails in Casdoor: admin exists only in org "built-in"; LobeChat
+    uses org "lobechat". Use user "user" / "pswd123".
+  - Raw IP rejected: Caddy :80 catch-all returns 421 "Misdirected Request"; raw
+    IP HTTPS returns 000 (no cert for an IP); port 47000 closed in SG (timeout).
+  - stdio MCP session drops: stale mcp-session-id -> 400; v2 has no retry patch,
+    so demo MCP early after a fresh boot.
+  - Stack rollback "ssm:GetParameter denied": someone reintroduced the native
+    SSM AMI parameter type — don't; use deploy.sh DescribeImages -> AmiId.
+  - Private-repo clone fails at boot: the repo must be PUBLIC (or use a deploy
+    token) during deploy; UserData does `git clone` with no creds.
+  - Model not selectable: OPENAI_MODEL_LIST must be in the lobe-chat.environment
+    block of docker-compose.yml (compose does not auto-pass .env-only vars).
+  - Upload fails "bucket missing": bootstrap creates `lobe` via `mc mb`;
+    re-run `docker exec minio mc mb -p local/lobe`.
+  - SSH times out: home IP rotated; SG only allows the old /32 — re-run
+    deploy.sh (re-detects IP, fast SG-only update).
+
+
+==== 13. LIKELY EXAM Q&A (cause -> effect) ====
+
+  - Why CloudFormation (not Terraform)? Teacher's verbal rule (mandatory);
+    AWS-native, server-side state, auto rollback, change sets.
+  - Why Ansible (in the v3.x stage)? Agentless, idempotent CONFIGURATION
+    management over SSH — separates configure from provision (CFN).
+  - Why MCPHub? Aggregates ~12 MCP servers behind ONE endpoint; multiplexes
+    tool lists; supervises stdio child processes; one interface to LobeChat.
+  - Why a custom MCPHub Dockerfile? stdio MCP children need graphviz +
+    libgraphviz-dev + gcc (diagrams) and docker.io (run d2 container).
+  - MCP weakness? stdio sessions go stale -> 400; the retry fix lived in
+    source (route.js), removed in v2.
+  - Who decides to call a tool? The LLM, via function calling; MCPHub only
+    executes after the model emits a tool_call.
+  - Why both Postgres(pgvector) and Qdrant? Postgres = transactional/operational
+    data; Qdrant = dedicated vector search for RAG. pgvector present but unused
+    for RAG.
+  - Why secrets in GitHub are bad? They leak permanently in history; use a
+    secret store / generated .env (here on encrypted EBS, 0600).
+  - Why not modify LobeChat source? Teacher rule; keeps upstream upgradable;
+    avoids maintaining a fork patch (route.js removed).
+  - Docker vs Kubernetes? Docker runs containers on one host (Compose here); K8s
+    orchestrates many nodes with self-healing/scaling/rolling updates. K8s does
+    not replace the runtime.
+  - How does LobeChat store/communicate? Stores in Postgres (data), MinIO
+    (files), Qdrant (vectors); communicates over a docker bridge by service
+    name; reachable publicly only through Caddy over HTTPS.
+  - Why HTTPS? OAuth/SSO cookies (SameSite/Secure), MCP/SSE streaming
+    (mixed-content), production discipline; raw IP/AWS DNS can't get a public
+    cert.
+  - Why LiteLLM? OpenAI-compatible proxy = provider abstraction; swap Bedrock
+    for OpenAI/Anthropic/local with ONE config file (low model lock-in); also
+    handles the drop-top_p quirk and master-key auth.
+  - Why Bedrock instead of local vLLM? No GPU on EC2; IAM-role auth (no keys);
+    managed scaling; spec allows any pluggable endpoint.
+  - Why an EIP allocated up front? UserData/bootstrap derive the nip.io
+    hostnames from it before the instance is associated.
+  - Why split subdomains? Casdoor absolute asset URLs + MinIO S3 signature break
+    behind a shared host/path-prefix.
+  - What does the EC2 instance role grant? Only bedrock invoke/list/describe (no
+    S3/SSM/Secrets) — least privilege for the LLM path.
+  - Why hop limit 2? Containers reach IMDS via bridge->host (one extra hop).
+
+
+==== 14. TEACHER'S STATED HINTS / EXAM LOGISTICS ====
+
+  - Exam is CLOSED-BOOK, MCQ-style; NO LLM allowed during the exam.
+  - Pass mark = 5 (out of 10).
+  - The "technical part" of the exam = THIS LobeChat repository + its AWS
+    deployment.
+  - Theory scope ENDS at Kubernetes. Do NOT study SageMaker or other advanced
+    AWS services for the theory part.
+  - 40 multiple-choice questions + 10 short-answer "why" questions.
+  - Project submission context (FINAL-PROJECT.md): single PRIVATE GitHub repo
+    (fork of lobechat-aws), invite collaborator "joseporiolrius", tag the final
+    commit final-vX.Y.Z via Commitizen (cz bump). chat-dump.md mandatory per
+    question folder (NO_AI_USED marker or full transcript) — hiding AI use is an
+    integrity issue, using it is allowed.
+
+================================================================================
+QUICK-RECALL CHEAT VALUES
+  caddy:2-alpine | lobehub/lobe-chat-database | casbin/casdoor:v2.13.0 |
+  pgvector/pgvector:pg16 (shared-postgres) | minio/minio:latest (region
+  us-east-1) | qdrant/qdrant:latest | deepset/hayhooks:v1.1.0 (REST 1416 /
+  MCP 1417) | ghcr.io/berriai/litellm:main-latest (port 4000) |
+  lobechat-aws-mcphub:latest (port 3000) | lobe-chat:3210.
+  Bedrock IDs: eu.anthropic.claude-haiku-4-5-20251001-v1:0 ;
+  eu.anthropic.claude-sonnet-4-5-20250929-v1:0 ; eu.anthropic.claude-sonnet-4-6 ;
+  amazon.titan-embed-text-v2:0. additional_drop_params:["top_p"].
+  VPC 10.0.0.0/16 | subnet 10.0.1.0/24 | gp3 60GB encrypted | t3.xlarge |
+  IMDSv2 HttpTokens required, HttpPutResponseHopLimit 2 |
+  CAPABILITY_NAMED_IAM | AMI owner 099720109477 (Canonical), ubuntu-noble-24.04.
+  Public ports: 80 + 443 only. Caddy :80 -> 421. SSO: org lobechat / user / pswd123.
+================================================================================
