@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DevOps Midterm — MCQ Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ind:#5b6cff; --ind-soft:#eef0ff;
+  --green:#15803d; --green-soft:#dcfce7;
+  --red:#e11d48; --red-soft:#ffe4e6;
+  --amber:#d97706; --amber-soft:#fef3c7;
+  --bg:#fbfaf7; --panel:#fff; --ink:#1c1c1f; --body:#2d2d33;
+  --muted:#6b7280; --line:#e8e6df; --soft:#f3f1ec;
+  --serif:'Fraunces',Georgia,serif; --sans:'Inter',system-ui,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+
+/* top bar */
+.topbar{position:sticky;top:0;z-index:20;background:rgba(251,250,247,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:760px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-family:var(--serif);font-weight:600;font-size:1rem;color:var(--ink)}
+.brand i{font-style:italic;color:var(--muted);font-weight:400}
+.tb-right{display:flex;align-items:center;gap:16px;font-size:.82rem;font-weight:600;color:var(--muted)}
+.tb-right .timer{font-variant-numeric:tabular-nums}
+.progress{height:4px;background:var(--soft)}
+.progress-bar{height:100%;width:0;background:var(--ind);transition:width .3s ease}
+
+/* screens */
+.screen{display:none;padding:48px 0 80px}
+.screen.active{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* start */
+.eyebrow{font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:14px}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(2rem,5vw,3rem);line-height:1.08;letter-spacing:-.02em;color:var(--ink);margin-bottom:16px}
+h1 em{font-style:italic;color:var(--muted)}
+.deck{font-size:1.08rem;max-width:560px;margin-bottom:30px}
+.opts-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:24px}
+.opts-card h3{font-family:var(--serif);font-size:1.1rem;color:var(--ink);margin-bottom:14px}
+.toggle-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.seg button{font-family:var(--sans);font-size:.85rem;font-weight:600;padding:9px 16px;border:none;background:transparent;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--ink);color:#fff}
+.seg-label{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);align-self:center;margin-right:4px}
+.check-row{display:flex;align-items:center;gap:10px;font-size:.9rem;color:var(--body);margin-top:6px}
+.check-row input{width:18px;height:18px;accent-color:var(--ind);cursor:pointer}
+.btn{font-family:var(--sans);font-size:.95rem;font-weight:600;padding:13px 26px;border-radius:10px;border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{opacity:.88}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.ghost:hover{background:var(--soft);opacity:1}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.meta-row{display:flex;gap:20px;font-size:.82rem;color:var(--muted);margin-top:18px;flex-wrap:wrap}
+.meta-row b{color:var(--ink)}
+
+/* question */
+.q-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.q-counter{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ind)}
+.q-tag{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--soft);padding:3px 10px;border-radius:20px}
+.q-text{font-family:var(--serif);font-size:1.4rem;font-weight:500;line-height:1.3;color:var(--ink);margin-bottom:24px}
+.options{display:flex;flex-direction:column;gap:12px;margin-bottom:26px}
+.option{display:flex;align-items:flex-start;gap:14px;text-align:left;padding:16px 18px;border:1.5px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;font-size:.98rem;color:var(--body);transition:border-color .15s, background .15s;width:100%;font-family:var(--sans)}
+.option:hover:not(.locked){border-color:var(--ind)}
+.option .key{flex:none;width:26px;height:26px;border-radius:7px;background:var(--soft);color:var(--muted);font-weight:700;font-size:.82rem;display:grid;place-items:center;transition:.15s}
+.option.selected{border-color:var(--ind);background:var(--ind-soft)}
+.option.selected .key{background:var(--ind);color:#fff}
+.option.correct{border-color:var(--green);background:var(--green-soft)}
+.option.correct .key{background:var(--green);color:#fff}
+.option.wrong{border-color:var(--red);background:var(--red-soft)}
+.option.wrong .key{background:var(--red);color:#fff}
+.option.locked{cursor:default}
+.mark{margin-left:auto;font-weight:700;font-size:1.1rem;align-self:center}
+.feedback{border-radius:12px;padding:16px 18px;margin-bottom:24px;font-size:.92rem;display:none;border:1px solid var(--line)}
+.feedback.show{display:block;animation:fade .25s ease}
+.feedback.ok{background:var(--green-soft);border-color:var(--green)}
+.feedback.no{background:var(--red-soft);border-color:var(--red)}
+.feedback b{color:var(--ink)}
+.feedback .lab{font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:.72rem;margin-bottom:4px;display:block}
+.feedback.ok .lab{color:var(--green)} .feedback.no .lab{color:var(--red)}
+.nav-btns{display:flex;justify-content:space-between;gap:12px}
+
+/* result */
+.result-head{text-align:center;margin-bottom:36px}
+.ring{width:170px;height:170px;margin:0 auto 20px}
+.score-big{font-family:var(--serif);font-size:3rem;font-weight:600;color:var(--ink)}
+.verdict{font-family:var(--serif);font-size:1.5rem;font-weight:500;margin-bottom:6px}
+.verdict.pass{color:var(--green)} .verdict.fail{color:var(--red)}
+.result-sub{color:var(--muted);font-size:.95rem}
+.breakdown{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:24px}
+.breakdown h3{font-family:var(--serif);font-size:1.1rem;margin-bottom:12px;color:var(--ink)}
+.bd-row{display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:.88rem}
+.bd-row .name{width:140px;color:var(--body)}
+.bd-bar{flex:1;height:9px;background:var(--soft);border-radius:6px;overflow:hidden}
+.bd-fill{height:100%;background:var(--green);border-radius:6px}
+.bd-row .frac{width:48px;text-align:right;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+.review-item{background:#fff;border:1px solid var(--line);border-left:4px solid var(--red);border-radius:10px;padding:16px 18px;margin-bottom:12px;font-size:.9rem}
+.review-item.ok{border-left-color:var(--green)}
+.review-q{font-weight:600;color:var(--ink);margin-bottom:8px}
+.review-line{margin-bottom:3px}
+.review-line .tag{font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;margin-right:6px}
+.review-line.your .tag{color:var(--red)} .review-line.corr .tag{color:var(--green)}
+.center{text-align:center}
+.result-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:28px 0}
+.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:24px 0 50px}
+@media(max-width:560px){.q-text{font-size:1.2rem}.bd-row .name{width:96px}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">DevOps Midterm <i>· MCQ trainer</i></div>
+    <div class="tb-right">
+      <span id="liveScore" style="display:none">Score <b id="scoreNow">0</b></span>
+      <span class="timer" id="timer" style="display:none">00:00</span>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="pbar"></div></div>
+</div>
+
+<!-- START -->
+<section class="screen active" id="start">
+  <div class="wrap">
+    <div class="eyebrow">ESADE C8 · DevOps · retake your midterm</div>
+    <h1>30 questions, <em>your exact midterm</em></h1>
+    <p class="deck">Same questions and options as the real paper, with instant explanations so each retry teaches you something. Pick a mode and go.</p>
+
+    <div class="opts-card">
+      <h3>Mode</h3>
+      <div class="toggle-row">
+        <span class="seg-label">Feedback</span>
+        <div class="seg" id="modeSeg">
+          <button data-mode="practice" class="on">Practice (instant)</button>
+          <button data-mode="exam">Exam (at the end)</button>
+        </div>
+      </div>
+      <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Shuffle question order</label>
+      <label class="check-row"><input type="checkbox" id="shuffleO" checked> Shuffle answer order</label>
+    </div>
+
+    <button class="btn" id="startBtn">Start the 30 questions →</button>
+    <div class="meta-row">
+      <span><b>30</b> questions</span>
+      <span><b>Topics:</b> DevOps · CI/CD · GitHub Actions · IaC · Docker · Ansible</span>
+      <span>Pass shown at <b>50%</b></span>
+    </div>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section class="screen" id="quiz">
+  <div class="wrap">
+    <div class="q-top">
+      <span class="q-counter" id="qCounter">Question 1 / 30</span>
+      <span class="q-tag" id="qTag">DevOps</span>
+    </div>
+    <div class="q-text" id="qText"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="nav-btns">
+      <button class="btn ghost" id="skipBtn">Skip</button>
+      <button class="btn" id="actionBtn" disabled>Check</button>
+    </div>
+  </div>
+</section>
+
+<!-- RESULT -->
+<section class="screen" id="result">
+  <div class="wrap">
+    <div class="result-head">
+      <svg class="ring" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="#e8e6df" stroke-width="12"/>
+        <circle id="ringFill" cx="60" cy="60" r="52" fill="none" stroke="#15803d" stroke-width="12" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s ease"/>
+        <text x="60" y="58" text-anchor="middle" class="score-big" id="ringPct" style="font-family:var(--serif);fill:#1c1c1f">0%</text>
+        <text x="60" y="78" text-anchor="middle" id="ringFrac" style="font-family:var(--sans);font-size:11px;fill:#6b7280">0 / 30</text>
+      </svg>
+      <div class="verdict" id="verdict">—</div>
+      <div class="result-sub" id="resultSub"></div>
+    </div>
+
+    <div class="breakdown">
+      <h3>By topic</h3>
+      <div id="bdRows"></div>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn" id="retryBtn">Retry all</button>
+      <button class="btn ghost" id="retryWrongBtn">Retry only my mistakes</button>
+    </div>
+
+    <h3 style="font-family:var(--serif);font-size:1.2rem;color:var(--ink);margin:8px 0 14px">Review</h3>
+    <div id="reviewList"></div>
+  </div>
+</section>
+
+<div class="foot">Self-study trainer · your answers stay in this browser · refresh to reset.</div>
+
+<script>
+const QUESTIONS = [
+  {t:"DevOps",q:"According to the course, DevOps is best described as:",o:["A culture of automation, collaboration, and continuous feedback that bridges Dev and Ops","A set of tools that replace the operations team","A specific job title for operations engineers","A project management methodology similar to Scrum"],c:0,e:"DevOps is a culture first: automation, collaboration and continuous feedback that tears down the Dev/Ops wall. Not a toolset, a job title, or a Scrum-style methodology."},
+  {t:"CI/CD",q:"What is the key difference between Continuous Delivery and Continuous Deployment?",o:["There is no difference; they are the same thing","Continuous Delivery requires manual approval for production; Continuous Deployment is fully automated","Continuous Delivery is slower than Continuous Deployment","Continuous Deployment only runs tests; Continuous Delivery also builds"],c:1,e:"Delivery keeps a manual approval gate before production; Deployment removes it so every passing change ships automatically. All deployment is delivery, not vice versa."},
+  {t:"CI/CD",q:"According to the Test Pyramid, which type of tests should form the base (most numerous)?",o:["End-to-end (E2E) tests","Manual tests","Unit tests","Integration tests"],c:2,e:"The base is many fast, cheap unit tests; integration sits in the middle; a few slow E2E tests at the top."},
+  {t:"GitHub",q:"In semantic versioning v2.5.1, a change to the MAJOR number (e.g., v2 to v3) indicates:",o:["A breaking change that is not backward compatible","A bug fix","A documentation update","A new backward-compatible feature"],c:0,e:"SemVer MAJOR.MINOR.PATCH: MAJOR = breaking change; MINOR = backward-compatible feature; PATCH = bug fix."},
+  {t:"GitHub Actions",q:"Where must GitHub Actions workflow files be stored in a repository?",o:["In the actions/ folder","In .github/workflows/*.yml","In package.json","In the root directory as workflow.yml"],c:1,e:"GitHub only picks up workflows from .github/workflows/ as .yml/.yaml files."},
+  {t:"GitHub Actions",q:"In GitHub Actions, jobs run in parallel by default. How do you make a job wait for others to complete?",o:["Using the after: keyword","Using the needs: keyword","Using the depends_on: keyword","Jobs always run sequentially; no keyword is needed"],c:1,e:"needs: declares job dependencies, forcing order. (depends_on: is Docker Compose, not Actions.)"},
+  {t:"GitHub Actions",q:"How should sensitive data like API keys be handled in GitHub Actions?",o:["Commit them in a .env file in the repository","Store them directly in the workflow YAML file","Pass them as command-line arguments in workflow steps","Use GitHub Secrets accessed via ${{ secrets.NAME }}"],c:3,e:"Never commit secrets. Store them as GitHub Secrets and reference them with ${{ secrets.NAME }} at runtime."},
+  {t:"CI/CD",q:"What is the recommended best practice for when to run CI tests?",o:["On every pull request before merge","Only when creating release tags","Only on the main branch after merging","Once a week on Fridays"],c:0,e:"Run CI on every pull request before merge — fast feedback keeps main always green."},
+  {t:"IaC",q:"What is Infrastructure as Code (IaC)?",o:["A programming language for building websites","A cloud provider billing system","The practice of defining and provisioning infrastructure using version-controlled code files instead of manual console operations","A type of database management system"],c:2,e:"IaC manages infrastructure through versioned definition files instead of manual console clicks."},
+  {t:"IaC",q:"What is the key difference between declarative and imperative approaches in IaC?",o:["Declarative describes WHAT you want (desired state); imperative describes HOW to do it (step by step)","There is no difference; they are the same thing","Declarative only works with AWS; imperative works with any cloud","Declarative is faster; imperative is slower"],c:0,e:"Declarative = state the desired end (Terraform, CloudFormation). Imperative = script the steps."},
+  {t:"IaC",q:"What does idempotency mean in the context of Infrastructure as Code?",o:["The infrastructure runs faster each time","You can only apply the configuration once","The configuration automatically deletes itself after a timeout","Applying the same configuration multiple times produces the same result"],c:3,e:"Idempotency: re-applying the same config converges to the same state, so it is safe to run repeatedly."},
+  {t:"IaC",q:"A team manually creates EC2 instances via the AWS Console whenever a new environment is needed. Which problem does adopting IaC solve?",o:["IaC eliminates the need for AWS accounts","IaC makes the instances run faster","IaC automatically scales instances based on traffic","IaC ensures every environment is reproducible, version-controlled, and consistent, eliminating configuration drift from manual steps"],c:3,e:"IaC removes manual drift: environments become reproducible, versioned and consistent."},
+  {t:"IaC",q:"Your company has 3 environments (dev, staging, prod) that must be identical. Why is IaC preferable to manually configuring each one through the cloud console?",o:["The cloud console does not support creating multiple environments","IaC guarantees all environments are built from the same code, so differences between them are eliminated","Manual configuration is faster but IaC is cheaper","IaC is the only way to use AWS services"],c:1,e:"Same code → same environments. Differences (drift) are eliminated because all three are built from one definition."},
+  {t:"IaC",q:"A CloudFormation stack update fails midway through. What happens by default?",o:["The stack is deleted and you must recreate it from scratch","CloudFormation pauses and waits for manual intervention","The partially updated resources remain in an inconsistent state","CloudFormation automatically rolls back to the previous known-good state"],c:3,e:"By default CloudFormation rolls back to the last known-good state, so you are never left half-updated."},
+  {t:"IaC",q:"What is a key advantage of Terraform over AWS CloudFormation?",o:["Terraform does not require state management","Terraform supports multiple cloud providers (multi-cloud)","Terraform is free while CloudFormation costs money","Terraform has better native AWS integration"],c:1,e:"Terraform is cloud-agnostic (multi-cloud). It DOES manage state; CloudFormation is the AWS-native one with better AWS integration."},
+  {t:"IaC",q:"The IaC principle of immutability says: do not modify running infrastructure, replace it. What analogy from the course captures this idea?",o:["Infrastructure should be treated like a factory — running 24/7 without stops","Infrastructure should be treated like a library — organized and catalogued","Infrastructure should be treated like a garden — constantly maintained","Servers should be treated like cattle (replaceable), not pets (manually cared for)"],c:3,e:"Cattle, not pets: rebuild from the definition rather than hand-nursing a server."},
+  {t:"Docker",q:"What is the key architectural difference between containers and virtual machines?",o:["VMs are faster to start than containers","Containers include a full operating system; VMs share the host kernel","There is no difference; they are the same technology","Containers share the host OS kernel; VMs include a full OS per application"],c:3,e:"Containers share the host kernel (light, fast); each VM carries a full guest OS (heavy)."},
+  {t:"Docker",q:"What is the relationship between a Docker image and a Docker container?",o:["A container creates images when it stops running","An image is a running instance; a container is the blueprint","They are the same thing with different names","An image is an immutable blueprint; a container is a running instance created from it"],c:3,e:"Image = immutable blueprint (built once, shared). Container = a running instance of that image."},
+  {t:"Docker",q:"What is the core architectural promise that containers provide to development and operations teams?",o:["Containers make applications run faster than bare-metal deployments","Containers eliminate the need for any testing before deployment","Containers provide automatic scaling without configuration","Build once, run anywhere — the same container behaves identically across development, staging, and production"],c:3,e:"Build once, run anywhere: the container carries its environment, so behaviour is identical across envs."},
+  {t:"Docker",q:"What is the primary purpose of Docker Compose?",o:["To replace Docker entirely with a simpler tool","To convert virtual machines into containers","To define and run multi-container applications with a single YAML file","To compile Docker images faster"],c:2,e:"Compose defines and runs a multi-container app from one YAML file on a single host."},
+  {t:"Docker",q:"Which of the following are container registries used to store and distribute Docker images?",o:["Docker Hub, GitHub Container Registry (GHCR), and AWS ECR","Google Drive, Dropbox, and OneDrive","npm, PyPI, and Maven Central","GitHub, GitLab, and Bitbucket (the Git repositories themselves)"],c:0,e:"Image registries: Docker Hub, GHCR and AWS ECR. (npm/PyPI are package registries; Git hosts store code, not images.)"},
+  {t:"Docker",q:"Why should you avoid using the :latest tag for Docker images in production?",o:["The :latest tag makes images larger",":latest images cannot be pulled from registries",":latest is mutable and can lead to unexpected updates; specific version tags ensure reproducibility","Docker Hub does not support the :latest tag"],c:2,e:":latest is mutable, so the image can change under you. Pin a specific version for reproducibility."},
+  {t:"Docker",q:"In the command docker run -p 8080:3000 myapp:v1, what does -p 8080:3000 mean?",o:["Port 8080 on the host is mapped to port 3000 inside the container","The container is assigned IP address 8080.3000","The container exposes port 8080 and listens on 3000","Both ports 8080 and 3000 are opened on the host"],c:0,e:"-p HOST:CONTAINER. So host 8080 forwards to container 3000."},
+  {t:"Docker",q:"Which of the following is a Docker security best practice?",o:["Use slim base images and create a non-root user inside the container","Always run containers as root for maximum compatibility","Store API keys directly in the Docker image for convenience","Use the largest base image to include all possible tools"],c:0,e:"Slim base image (smaller attack surface) + a non-root user. Never bake secrets into the image."},
+  {t:"Ansible",q:"Ansible is agentless. What protocol does it require on managed nodes to connect and execute tasks?",o:["FTP","SNMP","SSH (with Python installed on the target)","HTTP/HTTPS"],c:2,e:"Ansible rides over SSH (with Python on the target). No agent is installed — that is what agentless means."},
+  {t:"Ansible",q:"Ansible uses a push model for configuration. What does this mean?",o:["Servers push status reports to a monitoring dashboard","The control node initiates SSH connections to managed nodes and pushes configuration changes","Agents on each server periodically pull configuration from a central server","Configuration files are pushed to a Git repository for version control"],c:1,e:"Push model: the control node initiates the SSH connection and pushes config out. (Chef/Puppet pull via agents.)"},
+  {t:"Ansible",q:"What is the purpose of handlers in an Ansible playbook?",o:["To handle errors and exceptions during playbook execution","To define variables that can be reused across tasks","To run tasks in parallel across multiple servers","To execute actions only when triggered by a task that reports a change (via notify)"],c:3,e:"Handlers run only when a task notifies them on change — e.g. restart a service only if its config actually changed."},
+  {t:"Ansible",q:"Why is it recommended to use Ansible modules (e.g., apt, template) instead of raw shell commands in playbooks?",o:["Shell commands run faster than modules","Shell commands cannot be used with the become (sudo) directive","Modules automatically encrypt all data transmitted over SSH","Modules are idempotent by design — they check current state before making changes"],c:3,e:"Modules are idempotent: they check current state and act only if needed, so re-runs are safe. Raw shell is not."},
+  {t:"Ansible",q:"In a CI/CD pipeline that combines CloudFormation and Ansible, what is the correct order of operations?",o:["Create CloudFormation stack -> Build Docker image -> Delete stack -> Run Ansible","Run Ansible -> Create CloudFormation stack -> Build Docker image -> Verify service","Generate inventory -> Run Ansible -> Build Docker image -> Create CloudFormation stack","Build and push Docker image -> Provision infrastructure with CloudFormation -> Generate inventory from outputs -> Run Ansible playbook"],c:3,e:"Build/push the image, provision infra with CloudFormation, generate the inventory from stack outputs, then run Ansible to configure. Provision before you can configure."},
+  {t:"Ansible",q:"What is the purpose of an Ansible inventory file?",o:["To store the playbook execution history and logs","To define the list of managed nodes with their connection details (IPs, SSH keys, groups)","To encrypt secrets and credentials used during deployment","To define the cloud infrastructure resources to create"],c:1,e:"The inventory lists the managed hosts and how to reach them (IPs, SSH keys, groups)."}
+];
+
+const LETTERS=["A","B","C","D","E"];
+let state={mode:"practice",order:[],items:[],idx:0,picked:null,answered:false,answers:[]};
+
+// --- start screen wiring ---
+document.querySelectorAll('#modeSeg button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#modeSeg button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); state.mode=b.dataset.mode;
+}));
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function buildItems(sourceIdx){
+  const sQ=document.getElementById('shuffleQ').checked;
+  const sO=document.getElementById('shuffleO').checked;
+  let order=sourceIdx?[...sourceIdx]:QUESTIONS.map((_,i)=>i);
+  if(sQ) shuffle(order);
+  state.items=order.map(qi=>{
+    const Q=QUESTIONS[qi];
+    let optOrder=Q.o.map((_,i)=>i);
+    if(sO) shuffle(optOrder);
+    return {qi, optOrder, correctPos:optOrder.indexOf(Q.c)};
+  });
+}
+
+let timerInt=null, secs=0;
+function startTimer(){secs=0;document.getElementById('timer').style.display='inline';tick();timerInt=setInterval(()=>{secs++;tick()},1000)}
+function tick(){const m=String(Math.floor(secs/60)).padStart(2,'0');const s=String(secs%60).padStart(2,'0');document.getElementById('timer').textContent=`${m}:${s}`}
+function stopTimer(){clearInterval(timerInt)}
+
+function startQuiz(sourceIdx){
+  buildItems(sourceIdx);
+  state.idx=0;state.answers=[];state.picked=null;state.answered=false;
+  document.getElementById('liveScore').style.display=(state.mode==='practice')?'inline':'none';
+  document.getElementById('scoreNow').textContent='0';
+  show('quiz');startTimer();renderQ();
+}
+document.getElementById('startBtn').onclick=()=>startQuiz(null);
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo({top:0,behavior:'smooth'})}
+
+function renderQ(){
+  const it=state.items[state.idx];const Q=QUESTIONS[it.qi];
+  state.picked=null;state.answered=false;
+  document.getElementById('pbar').style.width=((state.idx)/state.items.length*100)+'%';
+  document.getElementById('qCounter').textContent=`Question ${state.idx+1} / ${state.items.length}`;
+  document.getElementById('qTag').textContent=Q.t;
+  document.getElementById('qText').textContent=Q.q;
+  const ob=document.getElementById('options');ob.innerHTML='';
+  it.optOrder.forEach((origIdx,pos)=>{
+    const btn=document.createElement('button');btn.className='option';btn.dataset.pos=pos;
+    btn.innerHTML=`<span class="key">${LETTERS[pos]}</span><span>${Q.o[origIdx]}</span><span class="mark"></span>`;
+    btn.onclick=()=>pick(pos);ob.appendChild(btn);
+  });
+  const fb=document.getElementById('feedback');fb.className='feedback';fb.innerHTML='';
+  const act=document.getElementById('actionBtn');
+  act.textContent=(state.mode==='practice')?'Check':(state.idx===state.items.length-1?'Finish':'Next');
+  act.disabled=true;act.onclick=onAction;
+  document.getElementById('skipBtn').style.display=(state.mode==='exam')?'none':'inline-flex';
+}
+
+function pick(pos){
+  if(state.answered) return;
+  state.picked=pos;
+  document.querySelectorAll('#options .option').forEach(o=>o.classList.toggle('selected',+o.dataset.pos===pos));
+  document.getElementById('actionBtn').disabled=false;
+  if(state.mode==='exam'){ // exam mode: selecting reveals nothing, action becomes next/finish
+    document.getElementById('actionBtn').textContent=(state.idx===state.items.length-1?'Finish':'Next');
+  }
+}
+
+function recordAndScore(){
+  const it=state.items[state.idx];
+  const correct=state.picked===it.correctPos;
+  state.answers[state.idx]={qi:it.qi,picked:state.picked,correctPos:it.correctPos,correct,optOrder:it.optOrder};
+  return correct;
+}
+function liveScoreUpdate(){const n=state.answers.filter(a=>a&&a.correct).length;document.getElementById('scoreNow').textContent=n}
+
+function onAction(){
+  const act=document.getElementById('actionBtn');
+  if(state.mode==='practice' && !state.answered){
+    if(state.picked===null) return;
+    const it=state.items[state.idx];const correct=recordAndScore();state.answered=true;liveScoreUpdate();
+    document.querySelectorAll('#options .option').forEach(o=>{
+      const pos=+o.dataset.pos;o.classList.add('locked');
+      if(pos===it.correctPos){o.classList.add('correct');o.querySelector('.mark').textContent='✓'}
+      else if(pos===state.picked){o.classList.add('wrong');o.querySelector('.mark').textContent='✕'}
+    });
+    const Q=QUESTIONS[it.qi];const fb=document.getElementById('feedback');
+    fb.className='feedback show '+(correct?'ok':'no');
+    fb.innerHTML=`<span class="lab">${correct?'Correct':'Not quite'}</span><b>${Q.o[it.optOrder[it.correctPos]]}</b><br>${Q.e}`;
+    act.textContent=(state.idx===state.items.length-1?'See results':'Next question');
+    return;
+  }
+  // advance
+  if(state.mode==='exam'){ if(state.picked===null) return; recordAndScore(); liveScoreUpdate(); }
+  next();
+}
+function next(){
+  if(state.idx>=state.items.length-1){return finish();}
+  state.idx++;renderQ();
+}
+document.getElementById('skipBtn').onclick=()=>{
+  if(!state.answers[state.idx]) state.answers[state.idx]={qi:state.items[state.idx].qi,picked:null,correctPos:state.items[state.idx].correctPos,correct:false,optOrder:state.items[state.idx].optOrder};
+  next();
+};
+
+function finish(){
+  stopTimer();
+  document.getElementById('pbar').style.width='100%';
+  const total=state.items.length;
+  const got=state.answers.filter(a=>a&&a.correct).length;
+  const pct=Math.round(got/total*100);
+  // ring
+  const circ=326.7;document.getElementById('ringFill').style.strokeDashoffset=circ*(1-got/total);
+  const passed=pct>=50;
+  document.getElementById('ringFill').setAttribute('stroke',passed?'#15803d':'#e11d48');
+  document.getElementById('ringPct').textContent=pct+'%';
+  document.getElementById('ringFrac').textContent=`${got} / ${total}`;
+  const v=document.getElementById('verdict');v.textContent=passed?'Passed':'Keep practising';v.className='verdict '+(passed?'pass':'fail');
+  document.getElementById('resultSub').textContent=`${got} of ${total} correct · time ${document.getElementById('timer').textContent}`;
+  // breakdown by topic
+  const topics={};
+  state.answers.forEach(a=>{if(!a)return;const t=QUESTIONS[a.qi].t;topics[t]=topics[t]||{c:0,n:0};topics[t].n++;if(a.correct)topics[t].c++});
+  const bd=document.getElementById('bdRows');bd.innerHTML='';
+  Object.keys(topics).forEach(t=>{
+    const {c,n}=topics[t];const p=Math.round(c/n*100);
+    bd.innerHTML+=`<div class="bd-row"><span class="name">${t}</span><div class="bd-bar"><div class="bd-fill" style="width:${p}%;background:${p>=50?'#15803d':'#e11d48'}"></div></div><span class="frac">${c}/${n}</span></div>`;
+  });
+  // review
+  const rl=document.getElementById('reviewList');rl.innerHTML='';
+  state.answers.forEach((a,i)=>{
+    if(!a)return;const Q=QUESTIONS[a.qi];
+    const yourTxt=a.picked===null?'<i>skipped</i>':Q.o[a.optOrder[a.picked]];
+    const corrTxt=Q.o[a.optOrder[a.correctPos]];
+    rl.innerHTML+=`<div class="review-item ${a.correct?'ok':''}"><div class="review-q">${i+1}. ${Q.q}</div>`+
+      (a.correct?`<div class="review-line corr"><span class="tag">✓ correct</span>${corrTxt}</div>`
+      :`<div class="review-line your"><span class="tag">✕ your answer</span>${yourTxt}</div><div class="review-line corr"><span class="tag">✓ correct</span>${corrTxt}</div>`)+
+      `<div style="color:var(--muted);margin-top:6px">${Q.e}</div></div>`;
+  });
+  show('result');
+}
+
+document.getElementById('retryBtn').onclick=()=>{document.getElementById('ringFill').style.strokeDashoffset=326.7;startQuiz(null)};
+document.getElementById('retryWrongBtn').onclick=()=>{
+  const wrong=state.answers.filter(a=>a&&!a.correct).map(a=>a.qi);
+  if(wrong.length===0){alert('No mistakes to retry — perfect score!');return;}
+  document.getElementById('ringFill').style.strokeDashoffset=326.7;startQuiz(wrong);
+};
+
+// keyboard: 1-4 / A-D to pick, Enter to advance
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('quiz').classList.contains('active'))return;
+  const it=state.items[state.idx];if(!it)return;
+  const n=it.optOrder.length;
+  let map={'1':0,'2':1,'3':2,'4':3,'a':0,'b':1,'c':2,'d':3};
+  const k=e.key.toLowerCase();
+  if(k in map && map[k]<n){pick(map[k]);}
+  else if(e.key==='Enter'){if(!document.getElementById('actionBtn').disabled)onAction();}
+});
+</script>
+</body>
+</html>

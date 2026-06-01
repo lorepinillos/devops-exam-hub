@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DevOps & MLOps — A Study Companion (Final Project Walkthrough)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --b1:#5b6cff;  --b1-soft:#eef0ff;   /* indigo — DevOps/MLOps */
+  --b2:#d97706;  --b2-soft:#fef3c7;   /* amber  — GitHub */
+  --b3:#0d9488;  --b3-soft:#ccfbf1;   /* teal   — CI/CD */
+  --b4:#e11d48;  --b4-soft:#ffe4e6;   /* rose   — IaC */
+  --b5:#15803d;  --b5-soft:#dcfce7;   /* green  — Docker */
+  --b6:#7c3aed;  --b6-soft:#ede9fe;   /* purple — Ansible */
+
+  --bg:#fbfaf7; --panel:#ffffff; --ink:#1c1c1f; --body:#2d2d33;
+  --muted:#6b7280; --line:#e8e6df; --soft:#f3f1ec; --accent:#1c1c1f;
+
+  --serif:'Fraunces', Georgia, serif;
+  --sans:'Inter', system-ui, sans-serif;
+  --mono:'Atkinson Hyperlegible', monospace;
+  --maxw:760px; --maxw-wide:1080px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{font-family:var(--serif);background:var(--bg);color:var(--body);line-height:1.65;font-size:18px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+img{max-width:100%;display:block}
+a{color:inherit}
+
+.nav{position:sticky;top:0;z-index:50;background:rgba(251,250,247,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);font-family:var(--sans)}
+.nav-inner{max-width:var(--maxw-wide);margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.nav-brand{font-family:var(--serif);font-weight:500;font-size:1rem;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.nav-brand i{font-style:italic;color:var(--muted);font-weight:400}
+.nav-links{display:flex;gap:6px;flex-wrap:wrap}
+.nav-link{text-decoration:none;font-size:.82rem;font-weight:600;padding:7px 11px;border-radius:6px;color:var(--muted);transition:color .15s, background-color .15s}
+.nav-link:hover,.nav-link.active{color:var(--ink);background:var(--soft)}
+.nav-link[data-block="1"].active{color:var(--b1);background:var(--b1-soft)}
+.nav-link[data-block="2"].active{color:var(--b2);background:var(--b2-soft)}
+.nav-link[data-block="3"].active{color:var(--b3);background:var(--b3-soft)}
+.nav-link[data-block="4"].active{color:var(--b4);background:var(--b4-soft)}
+.nav-link[data-block="5"].active{color:var(--b5);background:var(--b5-soft)}
+.nav-link[data-block="6"].active{color:var(--b6);background:var(--b6-soft)}
+
+.container{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+.container-wide{max-width:var(--maxw-wide);margin:0 auto;padding:0 24px}
+section{padding:64px 0}
+
+.hero{padding:80px 0 56px;background:linear-gradient(180deg, #fbfaf7 0%, #ffffff 100%);border-bottom:1px solid var(--line)}
+.hero-eyebrow{font-family:var(--sans);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:16px}
+.hero h1{font-family:var(--serif);font-size:clamp(2.4rem, 6vw, 3.8rem);font-weight:500;font-variation-settings:"opsz" 144;line-height:1.05;letter-spacing:-.02em;color:var(--ink);margin-bottom:18px}
+.hero h1 em{font-style:italic;color:var(--muted);font-weight:400}
+.hero .deck{font-size:1.15rem;color:var(--body);max-width:640px;line-height:1.55;margin-bottom:36px}
+.hero .meta{display:flex;gap:22px;font-family:var(--sans);font-size:.82rem;color:var(--muted);flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px;margin-top:14px}
+.hero .meta b{color:var(--ink);font-weight:600}
+
+.section-label{font-family:var(--sans);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:8px}
+h2{font-family:var(--serif);font-size:clamp(1.9rem, 4vw, 2.6rem);font-weight:500;font-variation-settings:"opsz" 144;line-height:1.15;letter-spacing:-.015em;color:var(--ink);margin-bottom:14px}
+h3{font-family:var(--serif);font-size:1.5rem;font-weight:600;line-height:1.25;letter-spacing:-.01em;color:var(--ink);margin:36px 0 12px}
+h4{font-family:var(--sans);font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink);margin:24px 0 10px}
+.lead{font-family:var(--serif);font-style:italic;font-size:1.18rem;color:var(--body);line-height:1.55;margin-bottom:32px}
+p{margin-bottom:18px}
+p strong{color:var(--ink);font-weight:600}
+p em{font-style:italic}
+ul,ol{margin:0 0 18px 22px}
+li{margin-bottom:8px}
+li strong{color:var(--ink)}
+
+.big-picture{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.big-picture-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;margin-top:32px}
+@media (max-width:780px){.big-picture-grid{grid-template-columns:1fr;gap:32px}}
+.diagram-card{border:1px solid var(--line);border-radius:10px;padding:24px;background:#fff}
+.diagram-card h4{margin-top:0;margin-bottom:14px}
+.diagram-card svg{width:100%;height:auto;display:block;margin:8px 0}
+.diagram-caption{font-family:var(--sans);font-size:.82rem;color:var(--muted);margin-top:12px;font-style:italic}
+
+.chapter{padding:80px 0 64px;border-bottom:1px solid var(--line);position:relative}
+.chapter-eyebrow{font-family:var(--sans);font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.18em;margin-bottom:14px}
+.chapter[data-block="1"] .chapter-eyebrow{color:var(--b1)}
+.chapter[data-block="2"] .chapter-eyebrow{color:var(--b2)}
+.chapter[data-block="3"] .chapter-eyebrow{color:var(--b3)}
+.chapter[data-block="4"] .chapter-eyebrow{color:var(--b4)}
+.chapter[data-block="5"] .chapter-eyebrow{color:var(--b5)}
+.chapter[data-block="6"] .chapter-eyebrow{color:var(--b6)}
+.chapter h2 .num{font-family:var(--sans);font-weight:700;font-size:.45em;vertical-align:middle;padding:4px 9px;border-radius:5px;margin-right:14px;position:relative;top:-4px}
+.chapter[data-block="1"] h2 .num{background:var(--b1-soft);color:var(--b1)}
+.chapter[data-block="2"] h2 .num{background:var(--b2-soft);color:var(--b2)}
+.chapter[data-block="3"] h2 .num{background:var(--b3-soft);color:var(--b3)}
+.chapter[data-block="4"] h2 .num{background:var(--b4-soft);color:var(--b4)}
+.chapter[data-block="5"] h2 .num{background:var(--b5-soft);color:var(--b5)}
+.chapter[data-block="6"] h2 .num{background:var(--b6-soft);color:var(--b6)}
+
+.mindmap{margin:32px 0 40px;padding:32px 24px;background:#fff;border:1px solid var(--line);border-radius:14px}
+.mindmap-title{font-family:var(--sans);font-size:.78rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);text-align:center;margin-bottom:24px}
+.mm-center{display:flex;justify-content:center;margin-bottom:0}
+.mm-node-main{font-family:var(--serif);font-weight:600;font-size:1.2rem;color:var(--ink);padding:14px 26px;border:2px solid var(--ink);border-radius:999px;background:#fff;text-align:center}
+.mm-branches{display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px;margin-top:28px;position:relative}
+.mm-branch{padding:16px 18px;border-radius:10px;font-family:var(--sans)}
+.mm-branch h5{font-family:var(--sans);font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 8px;color:inherit}
+.mm-branch ul{margin:0 0 0 16px;font-family:var(--sans)}
+.mm-branch li{font-size:.86rem;line-height:1.45;color:var(--body);margin-bottom:4px}
+.mm-branch li b{color:var(--ink);font-weight:600}
+.chapter[data-block="1"] .mm-branch{background:var(--b1-soft);color:var(--b1)}
+.chapter[data-block="2"] .mm-branch{background:var(--b2-soft);color:var(--b2)}
+.chapter[data-block="3"] .mm-branch{background:var(--b3-soft);color:var(--b3)}
+.chapter[data-block="4"] .mm-branch{background:var(--b4-soft);color:var(--b4)}
+.chapter[data-block="5"] .mm-branch{background:var(--b5-soft);color:var(--b5)}
+.chapter[data-block="6"] .mm-branch{background:var(--b6-soft);color:var(--b6)}
+
+.spotlight{margin:24px 0;padding:24px;background:#fff;border:1px solid var(--line);border-radius:10px}
+.spotlight-head{display:flex;align-items:baseline;gap:12px;margin-bottom:8px;flex-wrap:wrap}
+.spotlight-name{font-family:var(--serif);font-size:1.15rem;font-weight:600;color:var(--ink)}
+.spotlight-author{font-family:var(--sans);font-size:.78rem;color:var(--muted);font-style:italic}
+.spotlight-tag{font-family:var(--sans);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 8px;border-radius:4px}
+.chapter[data-block="1"] .spotlight-tag{background:var(--b1-soft);color:var(--b1)}
+.chapter[data-block="2"] .spotlight-tag{background:var(--b2-soft);color:var(--b2)}
+.chapter[data-block="3"] .spotlight-tag{background:var(--b3-soft);color:var(--b3)}
+.chapter[data-block="4"] .spotlight-tag{background:var(--b4-soft);color:var(--b4)}
+.chapter[data-block="5"] .spotlight-tag{background:var(--b5-soft);color:var(--b5)}
+.chapter[data-block="6"] .spotlight-tag{background:var(--b6-soft);color:var(--b6)}
+.spotlight-summary{font-family:var(--serif);font-style:italic;color:var(--muted);margin-bottom:14px;font-size:1rem}
+.spotlight-body{font-family:var(--sans);font-size:.92rem;line-height:1.55}
+.spotlight-body ul{margin:8px 0 0 18px}
+.spotlight-body li{margin-bottom:4px}
+.spotlight-body strong{color:var(--ink)}
+.spotlight-viz{margin:18px 0 6px}
+.spotlight-viz svg{width:100%;height:auto;display:block}
+
+.pull{margin:32px 0;padding:24px 28px;border-left:4px solid var(--ink);background:#fff;font-family:var(--serif);font-style:italic;font-size:1.1rem;line-height:1.55;color:var(--body)}
+.chapter[data-block="1"] .pull{border-left-color:var(--b1)}
+.chapter[data-block="2"] .pull{border-left-color:var(--b2)}
+.chapter[data-block="3"] .pull{border-left-color:var(--b3)}
+.chapter[data-block="4"] .pull{border-left-color:var(--b4)}
+.chapter[data-block="5"] .pull{border-left-color:var(--b5)}
+.chapter[data-block="6"] .pull{border-left-color:var(--b6)}
+.pull cite{display:block;font-style:normal;font-family:var(--sans);font-size:.78rem;color:var(--muted);margin-top:10px;text-transform:uppercase;letter-spacing:.08em}
+
+.callout{margin:32px 0;padding:24px 28px;border:1px dashed var(--line);border-radius:10px;background:#fff}
+.callout h4{margin-top:0}
+.callout ul{font-family:var(--sans);font-size:.92rem}
+.callout .tagline{font-family:var(--sans);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
+
+.moves{margin:32px 0 0;padding:24px 28px;border-radius:10px;background:var(--soft)}
+.moves h4{margin-top:0}
+.moves ul{font-family:var(--sans);font-size:.92rem;list-style:none;margin-left:0}
+.moves li{padding-left:24px;position:relative;margin-bottom:8px;line-height:1.55}
+.moves li::before{content:"\2192";position:absolute;left:0;top:0;font-weight:700;color:var(--ink)}
+.chapter[data-block="1"] .moves li::before{color:var(--b1)}
+.chapter[data-block="2"] .moves li::before{color:var(--b2)}
+.chapter[data-block="3"] .moves li::before{color:var(--b3)}
+.chapter[data-block="4"] .moves li::before{color:var(--b4)}
+.chapter[data-block="5"] .moves li::before{color:var(--b5)}
+.chapter[data-block="6"] .moves li::before{color:var(--b6)}
+
+.inline-viz{margin:28px 0;padding:24px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.inline-viz svg{width:100%;height:auto;display:block}
+.inline-viz .diagram-caption{text-align:center}
+
+.timeline-section{background:#fff;border-top:1px solid var(--line)}
+.timeline{position:relative;max-width:680px;margin:32px auto 0;padding-left:32px;border-left:2px solid var(--line)}
+.tl-decade{position:relative;padding:18px 0 8px 18px;margin-bottom:12px}
+.tl-decade::before{content:"";position:absolute;left:-40px;top:24px;width:14px;height:14px;background:var(--ink);border-radius:50%;border:3px solid var(--bg)}
+.tl-decade h4{font-family:var(--sans);font-size:.95rem;font-weight:700;margin:0 0 10px;color:var(--ink);text-transform:none;letter-spacing:0}
+.tl-decade ul{font-family:var(--sans);font-size:.88rem;color:var(--body);list-style:none;margin-left:0}
+.tl-decade li{margin-bottom:6px}
+.tl-decade li b{color:var(--ink)}
+
+/* SVG helpers */
+.svg-box{fill:#fff;stroke:#1c1c1f;stroke-width:1.5;rx:8}
+.svg-t{font-family:'Inter',sans-serif;font-size:13px;fill:#1c1c1f;font-weight:600}
+.svg-s{font-family:'Inter',sans-serif;font-size:11px;fill:#6b7280}
+.svg-arrow{stroke:#1c1c1f;stroke-width:1.6;fill:none;marker-end:url(#ah)}
+
+footer{padding:48px 0 64px;text-align:center;color:var(--muted);font-family:var(--sans);font-size:.84rem;background:var(--bg);border-top:1px solid var(--line)}
+footer a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+
+@media (max-width:600px){body{font-size:17px}.hero{padding:48px 0 32px}section{padding:48px 0}.chapter{padding:56px 0 48px}.mindmap{padding:24px 16px}.spotlight{padding:18px}.nav-links{gap:2px}.nav-link{padding:6px 8px;font-size:.76rem}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#top" class="nav-brand">DevOps &amp; MLOps <i>· a study companion</i></a>
+    <div class="nav-links">
+      <a href="#picture" class="nav-link">Big picture</a>
+      <a href="#block1" class="nav-link" data-block="1">1 · Foundations</a>
+      <a href="#block2" class="nav-link" data-block="2">2 · GitHub</a>
+      <a href="#block3" class="nav-link" data-block="3">3 · CI/CD</a>
+      <a href="#block4" class="nav-link" data-block="4">4 · IaC</a>
+      <a href="#block5" class="nav-link" data-block="5">5 · Docker</a>
+      <a href="#block6" class="nav-link" data-block="6">6 · Ansible</a>
+      <a href="#timeline" class="nav-link">Timeline</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="container">
+    <div class="hero-eyebrow">A study companion · ESADE C8 · DevOps &amp; MLOps</div>
+    <h1>DevOps &amp; MLOps <em>— the whole project, end to end</em></h1>
+    <p class="deck">A single linear walk from the philosophy of DevOps to the exact stack you built: a self-hosted LobeChat platform deployed to one AWS EC2 instance with CloudFormation. Every theory block ends with a "<b>In your project</b>" box that pins the concept to something you actually shipped, so the abstract and the concrete reinforce each other.</p>
+    <div class="meta">
+      <span><b>6</b> blocks</span>
+      <span><b>~30</b> core concepts</span>
+      <span><b>1</b> real project running through all of it</span>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════════════ BIG PICTURE ════════════════════ -->
+<section class="big-picture" id="picture">
+  <div class="container-wide">
+    <div class="section-label">§ 0 — The big picture</div>
+    <h2>Two maps to hold in your head</h2>
+    <p class="lead">Everything below is either a stage of the DevOps loop, or a tool that automates one of its arrows. Anchor on these two diagrams first.</p>
+    <div class="big-picture-grid">
+      <div class="diagram-card">
+        <h4>Map 1 — The DevOps loop</h4>
+        <svg viewBox="0 0 480 250" role="img" aria-label="DevOps infinity loop">
+          <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#1c1c1f"/></marker></defs>
+          <text x="120" y="24" class="svg-t" text-anchor="middle" style="fill:#5b6cff">DEV  (build the right thing)</text>
+          <text x="360" y="24" class="svg-t" text-anchor="middle" style="fill:#d97706">OPS  (run it reliably)</text>
+          <!-- top row -->
+          <rect x="20" y="40" width="90" height="40" rx="8" fill="#eef0ff" stroke="#5b6cff" stroke-width="1.5"/><text x="65" y="64" class="svg-t" text-anchor="middle">Plan</text>
+          <rect x="130" y="40" width="90" height="40" rx="8" fill="#eef0ff" stroke="#5b6cff" stroke-width="1.5"/><text x="175" y="64" class="svg-t" text-anchor="middle">Code</text>
+          <rect x="260" y="40" width="90" height="40" rx="8" fill="#eef0ff" stroke="#5b6cff" stroke-width="1.5"/><text x="305" y="64" class="svg-t" text-anchor="middle">Build</text>
+          <rect x="370" y="40" width="90" height="40" rx="8" fill="#eef0ff" stroke="#5b6cff" stroke-width="1.5"/><text x="415" y="64" class="svg-t" text-anchor="middle">Test</text>
+          <line x1="110" y1="60" x2="128" y2="60" class="svg-arrow"/>
+          <line x1="220" y1="60" x2="258" y2="60" class="svg-arrow"/>
+          <line x1="350" y1="60" x2="368" y2="60" class="svg-arrow"/>
+          <path d="M455,80 C475,95 475,135 455,150" class="svg-arrow"/>
+          <!-- bottom row -->
+          <rect x="370" y="150" width="90" height="40" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/><text x="415" y="174" class="svg-t" text-anchor="middle">Release</text>
+          <rect x="260" y="150" width="90" height="40" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/><text x="305" y="174" class="svg-t" text-anchor="middle">Deploy</text>
+          <rect x="130" y="150" width="90" height="40" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/><text x="175" y="174" class="svg-t" text-anchor="middle">Operate</text>
+          <rect x="20" y="150" width="90" height="40" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/><text x="65" y="174" class="svg-t" text-anchor="middle">Monitor</text>
+          <line x1="370" y1="170" x2="352" y2="170" class="svg-arrow"/>
+          <line x1="260" y1="170" x2="222" y2="170" class="svg-arrow"/>
+          <line x1="130" y1="170" x2="112" y2="170" class="svg-arrow"/>
+          <path d="M25,150 C5,135 5,95 25,80" class="svg-arrow"/>
+          <text x="240" y="225" class="svg-s" text-anchor="middle">Monitoring feeds back into Plan — the loop never ends.</text>
+        </svg>
+        <p class="diagram-caption">DevOps is one continuous loop, not a hand-off. The whole point is to make every arrow fast, automated and reversible.</p>
+      </div>
+      <div class="diagram-card">
+        <h4>Map 2 — Your project on that loop</h4>
+        <svg viewBox="0 0 480 250" role="img" aria-label="Project pipeline">
+          <defs><marker id="ah2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#1c1c1f"/></marker></defs>
+          <rect x="15" y="30" width="120" height="44" rx="8" fill="#fff" stroke="#1c1c1f" stroke-width="1.5"/><text x="75" y="50" class="svg-t" text-anchor="middle">Your laptop</text><text x="75" y="66" class="svg-s" text-anchor="middle">code + git push</text>
+          <rect x="180" y="30" width="120" height="44" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/><text x="240" y="50" class="svg-t" text-anchor="middle">GitHub repo</text><text x="240" y="66" class="svg-s" text-anchor="middle">lobechat-aws-cfn</text>
+          <rect x="345" y="30" width="120" height="44" rx="8" fill="#ffe4e6" stroke="#e11d48" stroke-width="1.5"/><text x="405" y="50" class="svg-t" text-anchor="middle">deploy.sh</text><text x="405" y="66" class="svg-s" text-anchor="middle">+ CloudFormation</text>
+          <line x1="135" y1="52" x2="178" y2="52" stroke="#1c1c1f" stroke-width="1.6" marker-end="url(#ah2)"/>
+          <line x1="300" y1="52" x2="343" y2="52" stroke="#1c1c1f" stroke-width="1.6" marker-end="url(#ah2)"/>
+          <path d="M405,74 L405,100" stroke="#1c1c1f" stroke-width="1.6" marker-end="url(#ah2)"/>
+          <rect x="300" y="105" width="165" height="50" rx="8" fill="#ffe4e6" stroke="#e11d48" stroke-width="1.5"/><text x="382" y="125" class="svg-t" text-anchor="middle">AWS VPC + EC2</text><text x="382" y="142" class="svg-s" text-anchor="middle">provisioned from template</text>
+          <path d="M300,130 L160,130" stroke="#1c1c1f" stroke-width="1.6" marker-end="url(#ah2)"/>
+          <rect x="15" y="105" width="145" height="50" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/><text x="87" y="125" class="svg-t" text-anchor="middle">user_data boot</text><text x="87" y="142" class="svg-s" text-anchor="middle">clone + docker compose up</text>
+          <path d="M87,155 L87,180" stroke="#1c1c1f" stroke-width="1.6" marker-end="url(#ah2)"/>
+          <rect x="15" y="185" width="450" height="48" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+          <text x="240" y="205" class="svg-t" text-anchor="middle">10-container stack — LobeChat · Casdoor · Postgres · MinIO · Qdrant · MCPHub · Caddy …</text>
+          <text x="240" y="223" class="svg-s" text-anchor="middle">served to users over HTTPS</text>
+        </svg>
+        <p class="diagram-caption">Code (Block 2) flows through a deploy step (Block 3) that runs IaC (Block 4) to provision a host that runs containers (Block 5). Ansible (Block 6) is the missing-piece way to configure the host.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ BLOCK 1 — FOUNDATIONS ════════════════════ -->
+<article class="chapter" id="block1" data-block="1">
+  <div class="container">
+    <div class="chapter-eyebrow">Chapter one · Foundations</div>
+    <h2><span class="num">01</span>DevOps &amp; MLOps foundations</h2>
+    <p class="lead">Before any tool: DevOps is a culture that collapses the wall between the people who build software and the people who run it, so that change becomes fast, frequent and safe.</p>
+    <p>For decades, <strong>Dev</strong> (developers, who want change) and <strong>Ops</strong> (operations, who want stability) were separate teams with opposite incentives. Code was thrown "over the wall", releases were rare, risky, manual events, and when something broke each side blamed the other. DevOps is the answer: one shared culture, with automation removing the manual hand-offs so software can be released continuously and reliably. <strong>MLOps</strong> then takes those same ideas and stretches them to cover the extra moving parts of machine learning, namely data and models.</p>
+
+    <div class="mindmap">
+      <div class="mindmap-title">Mindmap — the territory of Block 1</div>
+      <div class="mm-center"><div class="mm-node-main">DevOps &amp; MLOps</div></div>
+      <div class="mm-branches">
+        <div class="mm-branch"><h5>The problem</h5><ul><li><b>Silos</b> — Dev vs Ops, opposite goals</li><li><b>Over-the-wall</b> hand-offs</li><li>Rare, risky, manual releases</li></ul></div>
+        <div class="mm-branch"><h5>The culture</h5><ul><li><b>CALMS</b> — culture, automation, lean, measurement, sharing</li><li><b>Three Ways</b> — flow, feedback, learning</li><li>Shared ownership</li></ul></div>
+        <div class="mm-branch"><h5>The loop</h5><ul><li>Plan, Code, Build, Test</li><li>Release, Deploy, Operate, Monitor</li><li>Feedback never stops</li></ul></div>
+        <div class="mm-branch"><h5>Measure it</h5><ul><li><b>DORA</b> 4 metrics</li><li>Deploy frequency, lead time</li><li>MTTR, change-fail rate</li></ul></div>
+        <div class="mm-branch"><h5>MLOps adds</h5><ul><li><b>Data</b> + <b>model</b> as artifacts</li><li>Versioning + reproducibility</li><li>Drift, retraining, registry</li></ul></div>
+        <div class="mm-branch"><h5>The pillars</h5><ul><li>Version control (Block 2)</li><li>CI/CD (Block 3)</li><li>IaC + containers (4, 5, 6)</li></ul></div>
+      </div>
+    </div>
+
+    <h3>The concepts worth knowing cold</h3>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">CALMS</span><span class="spotlight-author">Willis / Humble, ~2010</span><span class="spotlight-tag">Core</span></div>
+      <div class="spotlight-summary">The five-letter checklist for whether an organisation is "doing DevOps" for real.</div>
+      <div class="spotlight-body"><ul>
+        <li><strong>C — Culture</strong>: shared responsibility, no blame, Dev and Ops as one team.</li>
+        <li><strong>A — Automation</strong>: remove manual steps (builds, tests, deploys, infra).</li>
+        <li><strong>L — Lean</strong>: small batches, reduce work-in-progress and waste.</li>
+        <li><strong>M — Measurement</strong>: you cannot improve what you do not measure (see DORA).</li>
+        <li><strong>S — Sharing</strong>: open knowledge, tools and feedback across teams.</li>
+      </ul></div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">The Three Ways</span><span class="spotlight-author">Kim et al., The Phoenix Project (2013)</span><span class="spotlight-tag">Core</span></div>
+      <div class="spotlight-summary">The principles underneath every DevOps practice.</div>
+      <div class="spotlight-body"><ul>
+        <li><strong>1. Flow</strong>: speed work left-to-right (Dev to Ops to customer). Small batches, automation, no bottlenecks.</li>
+        <li><strong>2. Feedback</strong>: amplify signals right-to-left. Monitoring, fast failure detection, fix before moving on.</li>
+        <li><strong>3. Continual learning</strong>: a culture of experimentation, blameless post-mortems, repeating practice.</li>
+      </ul></div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">DORA — the four key metrics</span><span class="spotlight-author">DevOps Research &amp; Assessment / Accelerate (2018)</span><span class="spotlight-tag">Measurement</span></div>
+      <div class="spotlight-summary">How you prove DevOps is working, with numbers.</div>
+      <div class="spotlight-body"><ul>
+        <li><strong>Deployment frequency</strong> — how often you ship (elite = on demand).</li>
+        <li><strong>Lead time for changes</strong> — commit to running in production.</li>
+        <li><strong>Change failure rate</strong> — % of deploys that cause an incident.</li>
+        <li><strong>Mean time to restore (MTTR)</strong> — how fast you recover from failure.</li>
+        <li><strong>Exam move</strong> — first two measure <em>velocity</em>, last two measure <em>stability</em>. Good DevOps improves all four together, disproving the old "fast vs safe" trade-off.</li>
+      </ul></div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">MLOps</span><span class="spotlight-author">extends DevOps to ML, ~2018+</span><span class="spotlight-tag">Core</span></div>
+      <div class="spotlight-summary">DevOps plus two new things that change everything: data and models.</div>
+      <div class="spotlight-viz">
+        <svg viewBox="0 0 480 150" role="img" aria-label="DevOps vs MLOps">
+          <rect x="10" y="20" width="220" height="110" rx="10" fill="#eef0ff" stroke="#5b6cff" stroke-width="1.5"/>
+          <text x="120" y="42" class="svg-t" text-anchor="middle">DevOps artifact</text>
+          <text x="120" y="66" class="svg-s" text-anchor="middle">just CODE</text>
+          <text x="120" y="92" class="svg-s" text-anchor="middle">versioned in git</text>
+          <text x="120" y="110" class="svg-s" text-anchor="middle">build is deterministic</text>
+          <rect x="250" y="20" width="220" height="110" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+          <text x="360" y="42" class="svg-t" text-anchor="middle">MLOps artifacts</text>
+          <text x="360" y="66" class="svg-s" text-anchor="middle">CODE + DATA + MODEL</text>
+          <text x="360" y="92" class="svg-s" text-anchor="middle">version all three</text>
+          <text x="360" y="110" class="svg-s" text-anchor="middle">drift → retrain → redeploy</text>
+        </svg>
+      </div>
+      <div class="spotlight-body"><ul>
+        <li><strong>New artifacts</strong> — you must version not only code but the <strong>data</strong> and the <strong>trained model</strong>.</li>
+        <li><strong>Reproducibility</strong> — same data + code + params must rebuild the same model.</li>
+        <li><strong>Experiment tracking + model registry</strong> — tools like MLflow record runs and store approved models.</li>
+        <li><strong>Drift &amp; continuous training</strong> — the world changes, so models decay; monitoring triggers retraining.</li>
+        <li><strong>Your project link</strong> — you consume models as a managed service (Claude via Bedrock), so you skip the training half of MLOps but still live the serving, monitoring and versioning half.</li>
+      </ul></div>
+    </div>
+
+    <div class="pull">"DevOps is not a goal, but a never-ending process of continual improvement."<cite>Jez Humble · co-author of Continuous Delivery</cite></div>
+
+    <div class="callout">
+      <p class="tagline">In your project</p>
+      <h4>How the final project <em>is</em> DevOps</h4>
+      <ul>
+        <li><strong>Automation</strong> — one command (<code>deploy.sh</code>) goes from nothing to a running HTTPS platform.</li>
+        <li><strong>Reproducibility</strong> — the CloudFormation template + repo rebuild the identical stack every time.</li>
+        <li><strong>Shared definition</strong> — the whole system lives as text in git, readable by anyone.</li>
+        <li><strong>Fast feedback</strong> — destroy and recreate in minutes, so experiments are cheap and reversible.</li>
+      </ul>
+    </div>
+
+    <div class="moves">
+      <h4>Exam moves</h4>
+      <ul>
+        <li>Define DevOps as <em>culture first</em>, tools second. Lead with the silo problem.</li>
+        <li>If asked "is DevOps just automation?" say no, cite CALMS and the Three Ways.</li>
+        <li>Name the four DORA metrics and split them into velocity vs stability.</li>
+        <li>Explain MLOps as "DevOps + data + model", and name drift and retraining as the new failure modes.</li>
+        <li>Use the loop diagram to place any tool: a tool automates one or more arrows.</li>
+      </ul>
+    </div>
+  </div>
+</article>
+
+<!-- ════════════════════ BLOCK 2 — GITHUB ════════════════════ -->
+<article class="chapter" id="block2" data-block="2">
+  <div class="container">
+    <div class="chapter-eyebrow">Chapter two · Version control</div>
+    <h2><span class="num">02</span>Git &amp; GitHub</h2>
+    <p class="lead">Version control is the foundation everything else stands on: if it is not in git, it does not exist, cannot be reviewed, and cannot be automated.</p>
+    <p><strong>Git</strong> is a distributed version-control system: every clone holds the full history, so you can commit, branch and diff offline. <strong>GitHub</strong> is a hosted home for git repositories that adds collaboration on top: pull requests, code review, issues, and automation through GitHub Actions. Git is the engine; GitHub is the shared workshop built around it.</p>
+
+    <div class="inline-viz">
+      <svg viewBox="0 0 620 170" role="img" aria-label="Git branching and pull request flow">
+        <defs><marker id="ah3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#d97706"/></marker></defs>
+        <line x1="30" y1="50" x2="590" y2="50" stroke="#d97706" stroke-width="2"/>
+        <text x="30" y="38" class="svg-s">main (always deployable)</text>
+        <circle cx="80" cy="50" r="7" fill="#d97706"/><circle cx="180" cy="50" r="7" fill="#d97706"/><circle cx="520" cy="50" r="7" fill="#d97706"/>
+        <line x1="180" y1="50" x2="280" y2="120" stroke="#6b7280" stroke-width="2"/>
+        <line x1="280" y1="120" x2="430" y2="120" stroke="#6b7280" stroke-width="2"/>
+        <line x1="430" y1="120" x2="520" y2="50" stroke="#6b7280" stroke-width="2" marker-end="url(#ah3)"/>
+        <circle cx="280" cy="120" r="7" fill="#6b7280"/><circle cx="360" cy="120" r="7" fill="#6b7280"/><circle cx="430" cy="120" r="7" fill="#6b7280"/>
+        <text x="355" y="145" class="svg-s" text-anchor="middle">feature branch — commits</text>
+        <rect x="395" y="70" width="120" height="26" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.3"/>
+        <text x="455" y="87" class="svg-s" text-anchor="middle" style="fill:#1c1c1f;font-weight:600">Pull Request + review</text>
+      </svg>
+      <p class="diagram-caption">Branch off main, commit in isolation, open a pull request, get it reviewed, then merge back. Main stays clean and releasable.</p>
+    </div>
+
+    <div class="mindmap">
+      <div class="mindmap-title">Mindmap — the territory of Block 2</div>
+      <div class="mm-center"><div class="mm-node-main">Git &amp; GitHub</div></div>
+      <div class="mm-branches">
+        <div class="mm-branch"><h5>Git primitives</h5><ul><li><b>Commit</b> — a snapshot</li><li><b>Branch</b> — a movable pointer</li><li><b>Merge</b> — join histories</li><li><b>Remote</b> — a shared copy</li></ul></div>
+        <div class="mm-branch"><h5>GitHub adds</h5><ul><li><b>Pull request</b> + review</li><li>Issues, projects</li><li><b>Actions</b> (CI/CD)</li><li>Collaborators, forks</li></ul></div>
+        <div class="mm-branch"><h5>Branching models</h5><ul><li><b>GitFlow</b> — main/develop/feature</li><li><b>Trunk-based</b> — short branches</li><li>Feature branches + PR</li></ul></div>
+        <div class="mm-branch"><h5>Discipline</h5><ul><li><b>Conventional Commits</b></li><li><b>SemVer</b> tags vX.Y.Z</li><li>Commitizen (<code>cz</code>)</li></ul></div>
+      </div>
+    </div>
+
+    <h3>The concepts worth knowing cold</h3>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">The pull request workflow</span><span class="spotlight-tag">Core</span></div>
+      <div class="spotlight-summary">The unit of collaboration and the natural place to attach automated checks.</div>
+      <div class="spotlight-body"><ul>
+        <li>Create a <strong>branch</strong> from main for one change.</li>
+        <li>Commit work, then open a <strong>pull request</strong> to merge it back.</li>
+        <li>The PR is where <strong>review</strong> happens and where <strong>CI</strong> runs automatically (Block 3).</li>
+        <li>Merge only when review approves and checks pass — this is the human + automated quality gate.</li>
+      </ul></div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">Branching strategies</span><span class="spotlight-tag">Compare</span></div>
+      <div class="spotlight-summary">How teams organise branches to balance safety and speed.</div>
+      <div class="spotlight-body"><ul>
+        <li><strong>GitFlow</strong> — long-lived <code>main</code> + <code>develop</code> + feature/release/hotfix branches. Safe, ceremonial, slower.</li>
+        <li><strong>Trunk-based</strong> — everyone commits to one trunk via tiny short-lived branches. Fast, needs strong CI and feature flags.</li>
+        <li><strong>Exam move</strong> — map strategy to the promotion flow: a merge to main deploys dev, a tag promotes to stage and prod.</li>
+      </ul></div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">Conventional Commits + SemVer</span><span class="spotlight-tag">Discipline</span></div>
+      <div class="spotlight-summary">Structured commit messages that let machines compute the next version number.</div>
+      <div class="spotlight-body"><ul>
+        <li>Format <code>type(scope): description</code> — <code>feat</code>, <code>fix</code>, <code>docs</code>, <code>chore</code>, with <code>!</code> for breaking.</li>
+        <li><strong>SemVer</strong> — <code>MAJOR.MINOR.PATCH</code>; breaking bumps MAJOR, feat bumps MINOR, fix bumps PATCH.</li>
+        <li><strong>Commitizen</strong> reads the commits and bumps the version + writes the changelog automatically.</li>
+      </ul></div>
+    </div>
+
+    <div class="callout">
+      <p class="tagline">In your project</p>
+      <h4>GitHub in the LobeChat build</h4>
+      <ul>
+        <li>The whole stack lives in a <strong>fork</strong>, with <code>origin</code> = your repo and <code>upstream</code> = the original.</li>
+        <li>The EC2 <strong>clones the repo at boot</strong> — so the repo is not just storage, it is part of the deploy.</li>
+        <li>Release is tagged <strong><code>final-vX.Y.Z</code></strong> with <code>cz bump</code> (Commitizen + SemVer).</li>
+        <li>Submission = a <strong>private</strong> repo with the grader invited as a <strong>collaborator</strong>.</li>
+      </ul>
+    </div>
+
+    <div class="moves">
+      <h4>Exam moves</h4>
+      <ul>
+        <li>Distinguish git (the tool) from GitHub (the hosted platform) in one sentence.</li>
+        <li>Explain why "branch, PR, review, merge" is the safety mechanism, not bureaucracy.</li>
+        <li>Tie Conventional Commits to automated versioning and changelogs.</li>
+        <li>Contrast GitFlow vs trunk-based by speed-vs-safety, then say which fits CI/CD better (trunk-based).</li>
+      </ul>
+    </div>
+  </div>
+</article>
+
+<!-- ════════════════════ BLOCK 3 — CI/CD ════════════════════ -->
+<article class="chapter" id="block3" data-block="3">
+  <div class="container">
+    <div class="chapter-eyebrow">Chapter three · Automation pipeline</div>
+    <h2><span class="num">03</span>Continuous integration, delivery &amp; deployment</h2>
+    <p class="lead">CI/CD is the conveyor belt that turns a commit into running software, with automated gates so speed never costs safety.</p>
+    <p>The three C's are a ladder. <strong>Continuous Integration</strong> means every change is merged frequently and automatically built and tested. <strong>Continuous Delivery</strong> means the result is <em>always</em> in a releasable state, with deployment one button-press away. <strong>Continuous Deployment</strong> removes even that button: every change that passes the pipeline goes to production automatically.</p>
+
+    <div class="inline-viz">
+      <svg viewBox="0 0 640 150" role="img" aria-label="CI/CD pipeline">
+        <defs><marker id="ah4" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#0d9488"/></marker></defs>
+        <rect x="10" y="45" width="86" height="48" rx="8" fill="#ccfbf1" stroke="#0d9488" stroke-width="1.5"/><text x="53" y="66" class="svg-t" text-anchor="middle">Source</text><text x="53" y="82" class="svg-s" text-anchor="middle">git push</text>
+        <rect x="126" y="45" width="86" height="48" rx="8" fill="#ccfbf1" stroke="#0d9488" stroke-width="1.5"/><text x="169" y="66" class="svg-t" text-anchor="middle">Build</text><text x="169" y="82" class="svg-s" text-anchor="middle">compile/image</text>
+        <rect x="242" y="45" width="86" height="48" rx="8" fill="#ccfbf1" stroke="#0d9488" stroke-width="1.5"/><text x="285" y="66" class="svg-t" text-anchor="middle">Test</text><text x="285" y="82" class="svg-s" text-anchor="middle">automated</text>
+        <rect x="358" y="45" width="96" height="48" rx="8" fill="#ccfbf1" stroke="#0d9488" stroke-width="1.5"/><text x="406" y="66" class="svg-t" text-anchor="middle">Release</text><text x="406" y="82" class="svg-s" text-anchor="middle">artifact ready</text>
+        <rect x="484" y="45" width="96" height="48" rx="8" fill="#ccfbf1" stroke="#0d9488" stroke-width="1.5"/><text x="532" y="66" class="svg-t" text-anchor="middle">Deploy</text><text x="532" y="82" class="svg-s" text-anchor="middle">to env</text>
+        <line x1="96" y1="69" x2="124" y2="69" stroke="#0d9488" stroke-width="1.6" marker-end="url(#ah4)"/>
+        <line x1="212" y1="69" x2="240" y2="69" stroke="#0d9488" stroke-width="1.6" marker-end="url(#ah4)"/>
+        <line x1="328" y1="69" x2="356" y2="69" stroke="#0d9488" stroke-width="1.6" marker-end="url(#ah4)"/>
+        <line x1="454" y1="69" x2="482" y2="69" stroke="#0d9488" stroke-width="1.6" marker-end="url(#ah4)"/>
+        <line x1="10" y1="110" x2="328" y2="110" stroke="#0d9488" stroke-width="1.3" stroke-dasharray="4 3"/>
+        <text x="169" y="125" class="svg-s" text-anchor="middle">Continuous Integration</text>
+        <line x1="358" y1="110" x2="580" y2="110" stroke="#0d9488" stroke-width="1.3" stroke-dasharray="4 3"/>
+        <text x="469" y="125" class="svg-s" text-anchor="middle">Delivery (manual gate) / Deployment (auto)</text>
+        <text x="406" y="34" style="font-family:'Inter';font-size:11px;fill:#e11d48;font-weight:700" text-anchor="middle">▲ approval gate here</text>
+      </svg>
+      <p class="diagram-caption">CI covers source-to-test. The difference between delivery and deployment is a single human approval before production.</p>
+    </div>
+
+    <div class="mindmap">
+      <div class="mindmap-title">Mindmap — the territory of Block 3</div>
+      <div class="mm-center"><div class="mm-node-main">CI / CD</div></div>
+      <div class="mm-branches">
+        <div class="mm-branch"><h5>The three C's</h5><ul><li><b>CI</b> — merge + build + test often</li><li><b>Delivery</b> — always releasable, manual push</li><li><b>Deployment</b> — fully automatic to prod</li></ul></div>
+        <div class="mm-branch"><h5>Pipeline stages</h5><ul><li>Source → Build → Test</li><li>Release → Deploy</li><li>Each stage can fail fast</li></ul></div>
+        <div class="mm-branch"><h5>Why</h5><ul><li>Small batches = small risk</li><li>Fast feedback on every commit</li><li>Repeatable, not heroic</li></ul></div>
+        <div class="mm-branch"><h5>Tools</h5><ul><li><b>GitHub Actions</b></li><li>GitLab CI, Jenkins</li><li>Runners, workflows, jobs</li></ul></div>
+      </div>
+    </div>
+
+    <h3>The concepts worth knowing cold</h3>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">Continuous Integration</span><span class="spotlight-tag">Core</span></div>
+      <div class="spotlight-summary">Integrate small changes constantly so problems surface in minutes, not at a painful big-bang merge.</div>
+      <div class="spotlight-body"><ul>
+        <li>Every push triggers an automated <strong>build + test</strong>.</li>
+        <li>A red build blocks the merge — the team keeps main always green.</li>
+        <li>Kills "integration hell" by making integration tiny and frequent.</li>
+      </ul></div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">Delivery vs Deployment</span><span class="spotlight-tag">Compare</span></div>
+      <div class="spotlight-summary">Both keep prod-ready artifacts; the only difference is who presses go.</div>
+      <div class="spotlight-body"><ul>
+        <li><strong>Continuous Delivery</strong> — automated up to production, a human approves the final release. Best when releases need judgement or compliance sign-off.</li>
+        <li><strong>Continuous Deployment</strong> — no human gate, every green build ships. Needs very strong tests and monitoring.</li>
+        <li><strong>Exam move</strong> — "all deployment is delivery, not all delivery is deployment".</li>
+      </ul></div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">GitHub Actions</span><span class="spotlight-tag">Tool</span></div>
+      <div class="spotlight-summary">CI/CD built into GitHub, triggered by repo events.</div>
+      <div class="spotlight-body"><ul>
+        <li><strong>Workflow</strong> — a YAML file in <code>.github/workflows/</code> triggered by an event (push, PR, tag).</li>
+        <li><strong>Job</strong> — runs on a <strong>runner</strong> (a VM); jobs contain ordered <strong>steps</strong>.</li>
+        <li><strong>Step</strong> — a shell command or a reusable <strong>action</strong>.</li>
+      </ul></div>
+    </div>
+
+    <div class="pull">"If it hurts, do it more often, and bring the pain forward."<cite>Continuous Delivery principle — Humble &amp; Farley (2010)</cite></div>
+
+    <div class="callout">
+      <p class="tagline">In your project</p>
+      <h4>The promotion flow you designed</h4>
+      <ul>
+        <li>Merge to <strong>main → deploys dev</strong>; a tagged release candidate → <strong>stage</strong>; a manual approval + final tag → <strong>prod</strong>.</li>
+        <li>That manual gate is the textbook line between <strong>delivery and deployment</strong>.</li>
+        <li><code>deploy.sh</code> is your <strong>deploy stage</strong>: it resolves the AMI and IP, validates, then runs CloudFormation.</li>
+        <li>Each environment is the <em>same</em> template as a separate stack — promotion is a parameter change, not a rewrite.</li>
+      </ul>
+    </div>
+
+    <div class="moves">
+      <h4>Exam moves</h4>
+      <ul>
+        <li>Draw the pipeline and label where CI ends and CD begins.</li>
+        <li>State the delivery-vs-deployment difference as "one manual approval".</li>
+        <li>Explain CI's value as "small batches + fast feedback = less risk".</li>
+        <li>Name GitHub Actions vocabulary: workflow, job, runner, step, action.</li>
+      </ul>
+    </div>
+  </div>
+</article>
+
+<!-- ════════════════════ BLOCK 4 — IaC ════════════════════ -->
+<article class="chapter" id="block4" data-block="4">
+  <div class="container">
+    <div class="chapter-eyebrow">Chapter four · Provisioning</div>
+    <h2><span class="num">04</span>Infrastructure as Code</h2>
+    <p class="lead">Stop clicking in consoles. Describe the infrastructure you want in a versioned file, and let a tool make reality match the file.</p>
+    <p><strong>Infrastructure as Code (IaC)</strong> manages servers, networks and cloud resources through machine-readable definition files instead of manual setup. Because the infrastructure is now text, it can be reviewed, versioned in git, diffed and rebuilt identically. This kills configuration drift and the "works on the one server nobody dares touch" problem.</p>
+
+    <div class="inline-viz">
+      <svg viewBox="0 0 620 140" role="img" aria-label="Declarative desired state reconcile">
+        <defs><marker id="ah5" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#e11d48"/></marker></defs>
+        <rect x="10" y="45" width="130" height="50" rx="8" fill="#ffe4e6" stroke="#e11d48" stroke-width="1.5"/><text x="75" y="66" class="svg-t" text-anchor="middle">Template (.yaml)</text><text x="75" y="83" class="svg-s" text-anchor="middle">desired state</text>
+        <rect x="245" y="45" width="130" height="50" rx="8" fill="#ffe4e6" stroke="#e11d48" stroke-width="1.5"/><text x="310" y="66" class="svg-t" text-anchor="middle">Engine</text><text x="310" y="83" class="svg-s" text-anchor="middle">plan → apply</text>
+        <rect x="480" y="45" width="130" height="50" rx="8" fill="#fff" stroke="#1c1c1f" stroke-width="1.5"/><text x="545" y="66" class="svg-t" text-anchor="middle">Real cloud</text><text x="545" y="83" class="svg-s" text-anchor="middle">actual state</text>
+        <line x1="140" y1="70" x2="243" y2="70" stroke="#e11d48" stroke-width="1.6" marker-end="url(#ah5)"/>
+        <line x1="375" y1="70" x2="478" y2="70" stroke="#e11d48" stroke-width="1.6" marker-end="url(#ah5)"/>
+        <path d="M478,88 C400,120 220,120 142,88" stroke="#6b7280" stroke-width="1.3" stroke-dasharray="4 3" fill="none" marker-end="url(#ah5)"/>
+        <text x="310" y="128" class="svg-s" text-anchor="middle">engine compares desired vs actual and reconciles the difference (idempotent)</text>
+      </svg>
+      <p class="diagram-caption">Declarative IaC: you state the destination, the engine computes the steps. Running it twice changes nothing the second time — that is idempotency.</p>
+    </div>
+
+    <div class="mindmap">
+      <div class="mindmap-title">Mindmap — the territory of Block 4</div>
+      <div class="mm-center"><div class="mm-node-main">Infrastructure as Code</div></div>
+      <div class="mm-branches">
+        <div class="mm-branch"><h5>Principles</h5><ul><li><b>Versioned</b> in git</li><li><b>Idempotent</b> — safe to re-run</li><li><b>Reproducible</b> — rebuild identically</li><li>Kills <b>drift</b></li></ul></div>
+        <div class="mm-branch"><h5>Two styles</h5><ul><li><b>Declarative</b> — state the goal (Terraform, CFN)</li><li><b>Imperative</b> — script the steps (bash, partly Ansible)</li></ul></div>
+        <div class="mm-branch"><h5>Terraform</h5><ul><li>Cloud-agnostic, HCL</li><li><b>State file</b> tracks reality</li><li>Providers, <code>plan</code>/<code>apply</code></li></ul></div>
+        <div class="mm-branch"><h5>CloudFormation</h5><ul><li>AWS-native, YAML/JSON</li><li><b>Stacks</b> + change sets</li><li>State managed by AWS</li></ul></div>
+        <div class="mm-branch"><h5>Immutable infra</h5><ul><li>Never patch in place</li><li>Replace, do not mutate</li><li>Cattle, not pets</li></ul></div>
+      </div>
+    </div>
+
+    <h3>The concepts worth knowing cold</h3>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">Declarative vs imperative</span><span class="spotlight-tag">Core</span></div>
+      <div class="spotlight-summary">Tell the tool <em>what</em> you want, not <em>how</em> to get there.</div>
+      <div class="spotlight-body"><ul>
+        <li><strong>Declarative</strong> — "I want one EC2, one VPC, this security group." The engine figures out the order and the API calls. Re-running converges to the same state.</li>
+        <li><strong>Imperative</strong> — "run this, then that." You own the sequencing and the "does it already exist?" checks.</li>
+        <li>Terraform and CloudFormation are declarative; a raw bash script is imperative.</li>
+      </ul></div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">Terraform vs CloudFormation</span><span class="spotlight-tag">Compare</span></div>
+      <div class="spotlight-summary">The two IaC tools in this course, and why your project switched between them.</div>
+      <div class="spotlight-viz">
+        <svg viewBox="0 0 480 132" role="img" aria-label="Terraform vs CloudFormation">
+          <rect x="10" y="14" width="220" height="108" rx="10" fill="#ffe4e6" stroke="#e11d48" stroke-width="1.5"/>
+          <text x="120" y="36" class="svg-t" text-anchor="middle">Terraform</text>
+          <text x="120" y="58" class="svg-s" text-anchor="middle">multi-cloud · HCL</text>
+          <text x="120" y="78" class="svg-s" text-anchor="middle">own state file</text>
+          <text x="120" y="98" class="svg-s" text-anchor="middle">plan / apply / destroy</text>
+          <rect x="250" y="14" width="220" height="108" rx="10" fill="#fff" stroke="#1c1c1f" stroke-width="1.5"/>
+          <text x="360" y="36" class="svg-t" text-anchor="middle">CloudFormation</text>
+          <text x="360" y="58" class="svg-s" text-anchor="middle">AWS-only · YAML</text>
+          <text x="360" y="78" class="svg-s" text-anchor="middle">state managed by AWS</text>
+          <text x="360" y="98" class="svg-s" text-anchor="middle">stacks / change sets</text>
+        </svg>
+      </div>
+      <div class="spotlight-body"><ul>
+        <li><strong>Terraform</strong> — works across clouds, uses HCL, and you manage a state file that records what exists.</li>
+        <li><strong>CloudFormation</strong> — AWS-native, YAML/JSON templates grouped into stacks, with AWS holding the state for you.</li>
+        <li><strong>Trade-off</strong> — Terraform is portable; CloudFormation is deeply integrated with AWS and needs no state backend.</li>
+      </ul></div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">Immutable infrastructure</span><span class="spotlight-tag">Principle</span></div>
+      <div class="spotlight-summary">Servers are cattle, not pets: you replace them, you do not nurse them.</div>
+      <div class="spotlight-body"><ul>
+        <li>To change a server, build a <strong>new</strong> one from the definition and throw the old one away.</li>
+        <li>Eliminates drift and "snowflake" servers nobody can reproduce.</li>
+        <li>Pairs naturally with IaC and containers.</li>
+      </ul></div>
+    </div>
+
+    <div class="pull">"Infrastructure as Code treats your servers, networks and load balancers the same way developers treat application code: written, reviewed, versioned, tested."<cite>Kief Morris · Infrastructure as Code</cite></div>
+
+    <div class="callout">
+      <p class="tagline">In your project</p>
+      <h4>From Terraform (v1) to CloudFormation (v2)</h4>
+      <ul>
+        <li>The teacher required <strong>CloudFormation</strong>, so v1's Terraform was rewritten as one declarative <code>lobechat.yaml</code> template.</li>
+        <li>One template provisions <strong>VPC, subnet, internet gateway, route table, EIP, security group, IAM role, and the EC2</strong> — all as desired state.</li>
+        <li>Promotion uses the <em>same</em> template per environment, parameterised — the IaC dream.</li>
+        <li><strong>Real-world wrinkle</strong> — the sandbox blocked the SSM-parameter AMI lookup, so the AMI is resolved at deploy time and passed as a parameter. No hardcoded AMI; the lookup stays dynamic.</li>
+      </ul>
+    </div>
+
+    <div class="moves">
+      <h4>Exam moves</h4>
+      <ul>
+        <li>Define IaC and immediately name its three wins: versioned, reproducible, no drift.</li>
+        <li>Contrast declarative vs imperative with a one-line example each.</li>
+        <li>Compare Terraform vs CloudFormation on portability and state management.</li>
+        <li>Explain idempotency as "running it again changes nothing".</li>
+        <li>Link immutable infrastructure to "cattle not pets".</li>
+      </ul>
+    </div>
+  </div>
+</article>
+
+<!-- ════════════════════ BLOCK 5 — DOCKER ════════════════════ -->
+<article class="chapter" id="block5" data-block="5">
+  <div class="container">
+    <div class="chapter-eyebrow">Chapter five · Containers</div>
+    <h2><span class="num">05</span>Docker &amp; containers</h2>
+    <p class="lead">Package an app with everything it needs into one portable unit, so "it works on my machine" becomes "it works everywhere".</p>
+    <p>A <strong>container</strong> bundles an application with its dependencies and runs as an isolated process that shares the host's operating-system kernel. That makes it far lighter than a virtual machine, which carries a whole guest OS. <strong>Docker</strong> is the tooling to build, ship and run containers, and <strong>Docker Compose</strong> defines and runs a multi-container application from a single YAML file.</p>
+
+    <div class="inline-viz">
+      <svg viewBox="0 0 620 180" role="img" aria-label="VM versus container">
+        <rect x="20" y="20" width="270" height="150" rx="10" fill="#fff" stroke="#1c1c1f" stroke-width="1.4"/>
+        <text x="155" y="40" class="svg-t" text-anchor="middle">Virtual machines</text>
+        <rect x="40" y="52" width="100" height="70" rx="6" fill="#f3f1ec" stroke="#6b7280"/><rect x="170" y="52" width="100" height="70" rx="6" fill="#f3f1ec" stroke="#6b7280"/>
+        <text x="90" y="72" class="svg-s" text-anchor="middle">App</text><text x="90" y="90" class="svg-s" text-anchor="middle">Libs</text><text x="90" y="112" class="svg-s" text-anchor="middle" style="fill:#e11d48">Guest OS</text>
+        <text x="220" y="72" class="svg-s" text-anchor="middle">App</text><text x="220" y="90" class="svg-s" text-anchor="middle">Libs</text><text x="220" y="112" class="svg-s" text-anchor="middle" style="fill:#e11d48">Guest OS</text>
+        <rect x="40" y="128" width="230" height="20" rx="4" fill="#e8e6df"/><text x="155" y="142" class="svg-s" text-anchor="middle">Hypervisor + Host OS</text>
+        <rect x="330" y="20" width="270" height="150" rx="10" fill="#fff" stroke="#15803d" stroke-width="1.4"/>
+        <text x="465" y="40" class="svg-t" text-anchor="middle">Containers</text>
+        <rect x="350" y="52" width="74" height="50" rx="6" fill="#dcfce7" stroke="#15803d"/><rect x="428" y="52" width="74" height="50" rx="6" fill="#dcfce7" stroke="#15803d"/><rect x="506" y="52" width="74" height="50" rx="6" fill="#dcfce7" stroke="#15803d"/>
+        <text x="387" y="72" class="svg-s" text-anchor="middle">App</text><text x="387" y="90" class="svg-s" text-anchor="middle">Libs</text>
+        <text x="465" y="72" class="svg-s" text-anchor="middle">App</text><text x="465" y="90" class="svg-s" text-anchor="middle">Libs</text>
+        <text x="543" y="72" class="svg-s" text-anchor="middle">App</text><text x="543" y="90" class="svg-s" text-anchor="middle">Libs</text>
+        <rect x="350" y="108" width="230" height="18" rx="4" fill="#ccfbf1"/><text x="465" y="121" class="svg-s" text-anchor="middle">Docker engine</text>
+        <rect x="350" y="130" width="230" height="18" rx="4" fill="#e8e6df"/><text x="465" y="143" class="svg-s" text-anchor="middle">Shared Host OS kernel</text>
+      </svg>
+      <p class="diagram-caption">VMs each carry a full guest OS (heavy). Containers share the host kernel (light), so they start in seconds and pack densely.</p>
+    </div>
+
+    <div class="mindmap">
+      <div class="mindmap-title">Mindmap — the territory of Block 5</div>
+      <div class="mm-center"><div class="mm-node-main">Docker</div></div>
+      <div class="mm-branches">
+        <div class="mm-branch"><h5>The objects</h5><ul><li><b>Image</b> — read-only blueprint</li><li><b>Container</b> — running instance</li><li><b>Registry</b> — image store (Docker Hub)</li></ul></div>
+        <div class="mm-branch"><h5>Dockerfile</h5><ul><li>Recipe to build an image</li><li><b>Layers</b>, cached</li><li><code>FROM</code>, <code>RUN</code>, <code>COPY</code>, <code>CMD</code></li></ul></div>
+        <div class="mm-branch"><h5>Runtime wiring</h5><ul><li><b>Volumes</b> — persist data</li><li><b>Networks</b> — containers talk</li><li><b>Ports</b> — expose to host</li><li><b>Healthchecks</b></li></ul></div>
+        <div class="mm-branch"><h5>Compose</h5><ul><li>Multi-container YAML</li><li><code>docker compose up</code></li><li>One file = whole stack</li></ul></div>
+      </div>
+    </div>
+
+    <h3>The concepts worth knowing cold</h3>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">Image vs container</span><span class="spotlight-tag">Core</span></div>
+      <div class="spotlight-summary">Blueprint vs the thing built from it — the single most common exam confusion.</div>
+      <div class="spotlight-body"><ul>
+        <li>An <strong>image</strong> is a read-only, layered blueprint (class). It is built once and shared via a <strong>registry</strong>.</li>
+        <li>A <strong>container</strong> is a running instance of an image (object). You can start many from one image.</li>
+        <li>Images are built from a <strong>Dockerfile</strong>, whose instructions become cached <strong>layers</strong>.</li>
+      </ul></div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">The Dockerfile</span><span class="spotlight-tag">Build</span></div>
+      <div class="spotlight-summary">A deterministic recipe so anyone rebuilds the exact same image.</div>
+      <div class="spotlight-body"><ul>
+        <li><code>FROM</code> a base image, <code>RUN</code> install steps, <code>COPY</code> code in, <code>CMD</code> the start command.</li>
+        <li>Each instruction is a cached layer — order them cheap-to-expensive so rebuilds stay fast.</li>
+        <li>This is reproducibility (Block 1) and immutability (Block 4) at the application level.</li>
+      </ul></div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">Docker Compose</span><span class="spotlight-tag">Orchestrate (single host)</span></div>
+      <div class="spotlight-summary">Declare a multi-service app once, bring it all up with one command.</div>
+      <div class="spotlight-body"><ul>
+        <li>A <code>docker-compose.yml</code> lists every <strong>service</strong>, its image, ports, volumes, env and dependencies.</li>
+        <li><code>docker compose up -d</code> starts the whole stack on one host with an internal network so services reach each other by name.</li>
+        <li>For many hosts you graduate to an orchestrator like <strong>Kubernetes</strong>; Compose is the single-host tool.</li>
+      </ul></div>
+    </div>
+
+    <div class="pull">"Build once, run anywhere — the container carries its environment with it."<cite>The core Docker promise</cite></div>
+
+    <div class="callout">
+      <p class="tagline">In your project</p>
+      <h4>Docker is the heart of your stack</h4>
+      <ul>
+        <li>The entire platform is a <strong>10-service <code>docker-compose.yml</code></strong> — LobeChat, Casdoor, Postgres, MinIO, Qdrant, MCPHub, Hayhooks, LiteLLM, Caddy and more.</li>
+        <li>Services talk over the Compose <strong>network</strong> by name (LobeChat reaches <code>mcphub:3000</code>, Caddy proxies <code>lobe-chat:3210</code>).</li>
+        <li><strong>Volumes</strong> persist Postgres, MinIO and Qdrant data; <strong>healthchecks</strong> gate start-up order.</li>
+        <li>The boot script installs Docker, then runs <code>docker compose up -d --build</code> — containers are the unit you actually ship.</li>
+        <li>The "no source modifications" rule meant <strong>removing a bind-mounted patch</strong> — a very concrete Docker volume lesson.</li>
+      </ul>
+    </div>
+
+    <div class="moves">
+      <h4>Exam moves</h4>
+      <ul>
+        <li>Explain container vs VM with the "shared kernel vs full guest OS" diagram.</li>
+        <li>Never confuse image (blueprint) with container (running instance).</li>
+        <li>Describe a Dockerfile as a layered, cached, reproducible recipe.</li>
+        <li>Position Compose as single-host orchestration and Kubernetes as multi-host.</li>
+        <li>Connect containers back to Block 1: they deliver reproducibility and immutability.</li>
+      </ul>
+    </div>
+  </div>
+</article>
+
+<!-- ════════════════════ BLOCK 6 — ANSIBLE ════════════════════ -->
+<article class="chapter" id="block6" data-block="6">
+  <div class="container">
+    <div class="chapter-eyebrow">Chapter six · Configuration management</div>
+    <h2><span class="num">06</span>Ansible &amp; configuration management</h2>
+    <p class="lead">Once a server exists, something has to install packages, write config files and start services on it, consistently, across one machine or a thousand. That is configuration management, and Ansible is the agentless way to do it.</p>
+    <p>IaC (Block 4) <em>provisions</em> the empty machine. <strong>Configuration management</strong> then <em>configures</em> what runs on it. <strong>Ansible</strong> does this with simple YAML <strong>playbooks</strong>, connecting over plain <strong>SSH</strong> with <strong>no agent</strong> to install on the target. It is push-based and idempotent: describe the desired end state and Ansible only changes what is not already correct.</p>
+
+    <div class="inline-viz">
+      <svg viewBox="0 0 600 180" role="img" aria-label="Ansible control node pushing over SSH">
+        <defs><marker id="ah6" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#7c3aed"/></marker></defs>
+        <rect x="20" y="65" width="150" height="56" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.6"/>
+        <text x="95" y="88" class="svg-t" text-anchor="middle">Control node</text>
+        <text x="95" y="106" class="svg-s" text-anchor="middle">playbook.yml + inventory</text>
+        <rect x="430" y="14" width="150" height="42" rx="8" fill="#fff" stroke="#1c1c1f" stroke-width="1.4"/><text x="505" y="40" class="svg-t" text-anchor="middle">Managed node 1</text>
+        <rect x="430" y="69" width="150" height="42" rx="8" fill="#fff" stroke="#1c1c1f" stroke-width="1.4"/><text x="505" y="95" class="svg-t" text-anchor="middle">Managed node 2</text>
+        <rect x="430" y="124" width="150" height="42" rx="8" fill="#fff" stroke="#1c1c1f" stroke-width="1.4"/><text x="505" y="150" class="svg-t" text-anchor="middle">Managed node 3</text>
+        <line x1="170" y1="88" x2="428" y2="35" stroke="#7c3aed" stroke-width="1.6" marker-end="url(#ah6)"/>
+        <line x1="170" y1="93" x2="428" y2="90" stroke="#7c3aed" stroke-width="1.6" marker-end="url(#ah6)"/>
+        <line x1="170" y1="98" x2="428" y2="145" stroke="#7c3aed" stroke-width="1.6" marker-end="url(#ah6)"/>
+        <text x="300" y="78" class="svg-s" text-anchor="middle" style="fill:#7c3aed;font-weight:700">push over SSH</text>
+        <text x="300" y="170" class="svg-s" text-anchor="middle">no agent installed on targets — just SSH + Python</text>
+      </svg>
+      <p class="diagram-caption">One control node pushes the desired configuration to many targets over SSH. Nothing special is pre-installed on them — that is what "agentless" means.</p>
+    </div>
+
+    <div class="mindmap">
+      <div class="mindmap-title">Mindmap — the territory of Block 6</div>
+      <div class="mm-center"><div class="mm-node-main">Ansible</div></div>
+      <div class="mm-branches">
+        <div class="mm-branch"><h5>Why it stands out</h5><ul><li><b>Agentless</b> — only SSH</li><li><b>Push</b>-based</li><li><b>Idempotent</b> modules</li><li>YAML, human-readable</li></ul></div>
+        <div class="mm-branch"><h5>Building blocks</h5><ul><li><b>Inventory</b> — list of hosts</li><li><b>Playbook</b> — list of plays</li><li><b>Task</b> — calls a module</li><li><b>Handler</b> — runs on change</li></ul></div>
+        <div class="mm-branch"><h5>Reuse</h5><ul><li><b>Roles</b> — packaged config</li><li><b>Templates</b> — Jinja2</li><li><b>Variables</b> + vault</li></ul></div>
+        <div class="mm-branch"><h5>vs others</h5><ul><li><b>Chef/Puppet</b> — pull + agent</li><li>Ansible — push + agentless</li><li>Config mgmt ≠ provisioning</li></ul></div>
+      </div>
+    </div>
+
+    <h3>The concepts worth knowing cold</h3>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">Agentless, push, idempotent</span><span class="spotlight-tag">Core</span></div>
+      <div class="spotlight-summary">The three words that define Ansible in an exam.</div>
+      <div class="spotlight-body"><ul>
+        <li><strong>Agentless</strong> — no software to install on targets; it rides over SSH (plus Python on the host).</li>
+        <li><strong>Push</strong> — the control node initiates and sends configuration out (Chef/Puppet instead <em>pull</em> from a server via an agent).</li>
+        <li><strong>Idempotent</strong> — modules check current state and act only if needed, so re-running is safe.</li>
+      </ul></div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">Playbook anatomy</span><span class="spotlight-tag">Build</span></div>
+      <div class="spotlight-summary">A YAML file that maps hosts to the tasks that bring them to a desired state.</div>
+      <div class="spotlight-body"><ul>
+        <li><strong>Inventory</strong> lists the hosts and groups; a <strong>playbook</strong> targets them.</li>
+        <li>A <strong>play</strong> binds hosts to <strong>tasks</strong>; each task calls a <strong>module</strong> (e.g. install a package, copy a file).</li>
+        <li><strong>Handlers</strong> run only when notified by a change (e.g. restart a service after its config changed).</li>
+        <li><strong>Templates</strong> (Jinja2) generate config files from variables.</li>
+      </ul></div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head"><span class="spotlight-name">Provisioning vs configuration management</span><span class="spotlight-tag">Compare</span></div>
+      <div class="spotlight-summary">Two different jobs that work as a relay, not rivals.</div>
+      <div class="spotlight-body"><ul>
+        <li><strong>Provisioning</strong> (Terraform / CloudFormation) — create the infrastructure: the VPC, the empty server.</li>
+        <li><strong>Configuration management</strong> (Ansible) — set up what runs <em>inside</em> that server: packages, files, services.</li>
+        <li>The clean pipeline is: IaC creates the host, then Ansible configures it, then Docker runs the app.</li>
+      </ul></div>
+    </div>
+
+    <div class="pull">"Ansible's goal is to be the simplest way to automate: human-readable, agentless, and safe to run again and again."<cite>Ansible design philosophy</cite></div>
+
+    <div class="callout">
+      <p class="tagline">In your project</p>
+      <h4>Where configuration management lives in your build</h4>
+      <ul>
+        <li>Your <code>bootstrap.sh</code> does the configuration-management job — installs Docker and the AWS CLI, writes the <code>.env</code>, rewrites Casdoor URLs, brings the stack up.</li>
+        <li>But it does it <strong>imperatively</strong> in bash. The "textbook" version of that exact work is an <strong>Ansible playbook</strong>: idempotent tasks instead of a linear script.</li>
+        <li>That contrast is itself an exam answer: <em>same goal, imperative bash vs declarative idempotent Ansible</em>.</li>
+        <li>It also completes the relay: <strong>CloudFormation provisions</strong> the EC2, the <strong>boot script configures</strong> it, <strong>Docker runs</strong> the app.</li>
+      </ul>
+    </div>
+
+    <div class="moves">
+      <h4>Exam moves</h4>
+      <ul>
+        <li>Define Ansible in three words: agentless, push, idempotent.</li>
+        <li>Contrast push (Ansible) vs pull + agent (Chef/Puppet).</li>
+        <li>Separate provisioning (IaC) from configuration management (Ansible) and show how they chain.</li>
+        <li>Name the building blocks: inventory, playbook, play, task, module, handler, role, template.</li>
+        <li>Explain idempotency as the reason a playbook is safe to run repeatedly.</li>
+      </ul>
+    </div>
+  </div>
+</article>
+
+<!-- ════════════════════ TIMELINE ════════════════════ -->
+<section class="timeline-section" id="timeline">
+  <div class="container">
+    <div class="section-label">§ Closing · How the toolchain grew up</div>
+    <h2>DevOps across the decades</h2>
+    <p class="lead">Each era added a layer your project now uses all at once. Anchoring tools to their moment makes the whole stack make sense.</p>
+    <div class="timeline">
+      <div class="tl-decade">
+        <h4>2000s — Agile spills into operations</h4>
+        <ul>
+          <li><b>2001</b> — the Agile Manifesto speeds up development, exposing Ops as the new bottleneck.</li>
+          <li><b>2009</b> — Patrick Debois coins "DevOps"; the first DevOpsDays.</li>
+        </ul>
+      </div>
+      <div class="tl-decade">
+        <h4>2010–2013 — the culture gets a name and a book</h4>
+        <ul>
+          <li><b>2010</b> — Humble &amp; Farley, <em>Continuous Delivery</em>. CALMS appears.</li>
+          <li><b>2013</b> — <em>The Phoenix Project</em> popularises the Three Ways. <b>Docker</b> launches: containers go mainstream.</li>
+        </ul>
+      </div>
+      <div class="tl-decade">
+        <h4>2014–2016 — infrastructure becomes code</h4>
+        <ul>
+          <li><b>2014</b> — <b>Terraform</b> and <b>Kubernetes</b> released; AWS CloudFormation maturing. Ansible rising as agentless config management.</li>
+        </ul>
+      </div>
+      <div class="tl-decade">
+        <h4>2018–now — measurement and machine learning</h4>
+        <ul>
+          <li><b>2018</b> — <em>Accelerate</em> formalises the four <b>DORA</b> metrics. <b>MLOps</b> emerges as ML hits production.</li>
+          <li><b>2019</b> — <b>GitHub Actions</b> brings CI/CD into the repo. <b>2020s</b> — managed LLM APIs (Bedrock) make AI a service you call, the world your project lives in.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>A study companion for ESADE C8 · DevOps &amp; MLOps — walked through the LobeChat-on-AWS final project.</p>
+    <p>Read it top to bottom once for the arc, then jump by the colored nav for revision.</p>
+  </div>
+</footer>
+
+<script>
+const sections = document.querySelectorAll('section, article.chapter');
+const links = document.querySelectorAll('.nav-link');
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting){
+      const id = e.target.id;
+      links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id));
+    }
+  });
+}, { rootMargin: '-40% 0px -55% 0px' });
+sections.forEach(s => s.id && obs.observe(s));
+</script>
+
+</body>
+</html>

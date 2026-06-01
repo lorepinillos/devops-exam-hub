@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LobeChat-on-AWS — MEGA Exam Companion (tricky details)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --b1:#5b6cff;--b1s:#eef0ff; --b2:#15803d;--b2s:#dcfce7; --b3:#0d9488;--b3s:#ccfbf1;
+  --b4:#d97706;--b4s:#fef3c7; --b5:#7c3aed;--b5s:#ede9fe; --b6:#e11d48;--b6s:#ffe4e6;
+  --bg:#fbfaf7;--panel:#fff;--ink:#1c1c1f;--body:#2d2d33;--muted:#6b7280;--line:#e8e6df;--soft:#f3f1ec;
+  --serif:'Fraunces',Georgia,serif;--sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:60px}
+body{font-family:var(--sans);background:var(--bg);color:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased}
+code{font-family:var(--mono);font-size:.85em;background:var(--soft);padding:1px 5px;border-radius:4px;color:#9a3412}
+.wrap{max-width:780px;margin:0 auto;padding:0 22px}
+.wide{max-width:1080px;margin:0 auto;padding:0 22px}
+
+.nav{position:sticky;top:0;z-index:50;background:rgba(251,250,247,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.nav-in{max-width:1080px;margin:0 auto;padding:11px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-family:var(--serif);font-weight:600;font-size:.98rem;color:var(--ink)}
+.brand i{font-style:italic;color:var(--muted);font-weight:400}
+.nav-links{display:flex;gap:5px;flex-wrap:wrap}
+.nl{text-decoration:none;font-size:.78rem;font-weight:600;padding:6px 9px;border-radius:6px;color:var(--muted)}
+.nl:hover,.nl.active{color:var(--ink);background:var(--soft)}
+.progress{height:3px;background:var(--soft)}#pbar{height:100%;width:0;background:var(--b6);transition:width .2s}
+
+section{padding:60px 0}
+.hero{padding:72px 0 48px;background:linear-gradient(180deg,#fbfaf7,#fff);border-bottom:1px solid var(--line)}
+.eyebrow{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:14px}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.1rem,5.5vw,3.5rem);line-height:1.06;letter-spacing:-.02em;color:var(--ink);margin-bottom:16px}
+h1 em{font-style:italic;color:var(--muted)}
+.deck{font-size:1.12rem;max-width:680px;margin-bottom:24px}
+h2{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.5rem);font-weight:500;line-height:1.15;letter-spacing:-.015em;color:var(--ink);margin-bottom:14px}
+h3{font-family:var(--serif);font-size:1.4rem;font-weight:600;color:var(--ink);margin:34px 0 12px}
+.lead{font-family:var(--serif);font-style:italic;font-size:1.16rem;color:var(--body);margin-bottom:28px}
+p{margin-bottom:16px}.section-label{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:8px}
+ul,ol{margin:0 0 16px 22px}li{margin-bottom:7px}
+.warnbar{margin-top:22px;padding:16px 20px;border:1px solid var(--b6);background:var(--b6s);border-radius:10px;font-size:.92rem}
+.warnbar b{color:var(--ink)}
+.meta{display:flex;gap:20px;font-size:.8rem;color:var(--muted);flex-wrap:wrap;margin-top:18px;border-top:1px solid var(--line);padding-top:16px}.meta b{color:var(--ink)}
+
+.chapter{padding:70px 0 56px;border-bottom:1px solid var(--line)}
+.ch-eyebrow{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.16em;margin-bottom:12px}
+.chapter[data-b="1"] .ch-eyebrow{color:var(--b1)}.chapter[data-b="2"] .ch-eyebrow{color:var(--b2)}.chapter[data-b="3"] .ch-eyebrow{color:var(--b3)}.chapter[data-b="4"] .ch-eyebrow{color:var(--b4)}.chapter[data-b="5"] .ch-eyebrow{color:var(--b5)}.chapter[data-b="6"] .ch-eyebrow{color:var(--b6)}
+h2 .num{font-size:.42em;font-weight:700;vertical-align:middle;padding:4px 9px;border-radius:5px;margin-right:12px;position:relative;top:-4px}
+.chapter[data-b="1"] h2 .num{background:var(--b1s);color:var(--b1)}.chapter[data-b="2"] h2 .num{background:var(--b2s);color:var(--b2)}.chapter[data-b="3"] h2 .num{background:var(--b3s);color:var(--b3)}.chapter[data-b="4"] h2 .num{background:var(--b4s);color:var(--b4)}.chapter[data-b="5"] h2 .num{background:var(--b5s);color:var(--b5)}.chapter[data-b="6"] h2 .num{background:var(--b6s);color:var(--b6)}
+
+.facts{width:100%;border-collapse:collapse;font-size:.86rem;margin:18px 0;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.facts th{text-align:left;background:var(--soft);padding:10px 12px;font-weight:700;color:var(--ink);font-size:.76rem;text-transform:uppercase;letter-spacing:.04em}
+.facts td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:top}
+.facts td:first-child{font-weight:600;color:var(--ink);white-space:nowrap}
+.pill{display:inline-block;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.03em}
+.pill.stdio{background:var(--b6s);color:var(--b6)}.pill.http{background:var(--b3s);color:var(--b3)}
+
+.spot{margin:22px 0;padding:22px;background:#fff;border:1px solid var(--line);border-radius:10px}
+.spot h4{font-family:var(--serif);font-size:1.12rem;color:var(--ink);margin-bottom:6px}
+.spot .sub{font-style:italic;color:var(--muted);font-size:.95rem;margin-bottom:12px;font-family:var(--serif)}
+.spot ul{font-size:.92rem;margin-left:18px}.spot strong{color:var(--ink)}
+
+.trap{margin:22px 0;padding:18px 22px;border:1px solid var(--b6);border-left:4px solid var(--b6);background:#fff;border-radius:10px;font-size:.92rem}
+.trap .lab{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--b6);margin-bottom:6px}
+.trap b{color:var(--ink)}
+
+.mcq{margin:24px 0;padding:20px 22px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:10px}
+.chapter[data-b="1"] .mcq{border-left-color:var(--b1)}.chapter[data-b="2"] .mcq{border-left-color:var(--b2)}.chapter[data-b="3"] .mcq{border-left-color:var(--b3)}.chapter[data-b="4"] .mcq{border-left-color:var(--b4)}.chapter[data-b="5"] .mcq{border-left-color:var(--b5)}.chapter[data-b="6"] .mcq{border-left-color:var(--b6)}
+.mcq .lab{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:7px}
+.mcq .q{font-weight:600;color:var(--ink);margin-bottom:10px;font-size:.96rem}
+.mcq ol{margin:0 0 4px 20px;font-size:.9rem}.mcq ol li{margin-bottom:5px}
+.mcq details{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
+.mcq summary{cursor:pointer;font-weight:700;font-size:.8rem;color:var(--ink);list-style:none}
+.mcq summary::-webkit-details-marker{display:none}.mcq summary::before{content:"\25B8 "}
+.mcq details[open] summary::before{content:"\25BE "}.mcq .ans{margin-top:8px;font-size:.9rem}.mcq .ans b{color:var(--ink)}
+
+.viz{margin:26px 0;padding:22px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.viz svg{width:100%;height:auto;display:block}.viz .cap{text-align:center;font-size:.8rem;color:var(--muted);font-style:italic;margin-top:10px}
+.svg-t{font-family:'Inter';font-size:11.5px;fill:#1c1c1f;font-weight:600}.svg-s{font-family:'Inter';font-size:10px;fill:#6b7280}
+
+.qa{max-width:780px;margin:20px auto 0}
+.qa details{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;background:#fff}
+.qa summary{cursor:pointer;padding:15px 18px;font-weight:600;color:var(--ink);font-size:.95rem;list-style:none}
+.qa summary::-webkit-details-marker{display:none}.qa summary::before{content:"Q  ";font-weight:800;color:var(--b6)}
+.qa details[open] summary{border-bottom:1px solid var(--line)}.qa .a{padding:13px 18px 16px;font-size:.9rem;line-height:1.6}.qa .a b{color:var(--ink)}
+/* evolution timeline */
+.tl{position:relative;margin:30px 0 0;padding-left:34px;border-left:2px solid var(--line)}
+.stage{position:relative;margin-bottom:26px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.stage::before{content:"";position:absolute;left:-43px;top:22px;width:16px;height:16px;border-radius:50%;background:var(--ink);border:3px solid var(--bg)}
+.stage[data-s="1"]::before{background:var(--b2)}.stage[data-s="2"]::before{background:var(--b3)}.stage[data-s="3"]::before{background:var(--b4)}.stage[data-s="4"]::before{background:var(--b5)}.stage[data-s="5"]::before{background:var(--b1)}.stage[data-s="6"]::before{background:var(--b6)}.stage[data-s="7"]::before{background:var(--ink)}
+.stage-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.ver{font-family:var(--mono);font-size:.72rem;font-weight:600;background:var(--soft);color:var(--ink);padding:2px 8px;border-radius:5px}
+.stage h4{font-family:var(--serif);font-size:1.12rem;color:var(--ink);margin:0}
+.pillar{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:20px;background:var(--b1s);color:var(--b1)}
+.stage[data-s="1"] .pillar{background:var(--b2s);color:var(--b2)}.stage[data-s="2"] .pillar{background:var(--b3s);color:var(--b3)}.stage[data-s="3"] .pillar{background:var(--b4s);color:var(--b4)}.stage[data-s="4"] .pillar{background:var(--b5s);color:var(--b5)}.stage[data-s="6"] .pillar{background:var(--b6s);color:var(--b6)}.stage[data-s="7"] .pillar{background:var(--ink);color:#fff}
+.stage .what{font-size:.9rem;margin:6px 0 10px}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+@media(max-width:560px){.pc{grid-template-columns:1fr}}
+.pc div{font-size:.84rem;padding:9px 12px;border-radius:8px}
+.pc .pro{background:var(--b2s)}.pc .con{background:var(--b6s)}
+.pc b{display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.pc .pro b{color:var(--b2)}.pc .con b{color:var(--b6)}
+.why{font-size:.86rem;color:var(--body);border-top:1px dashed var(--line);padding-top:8px}.why b{color:var(--ink)}
+.arc{margin:24px 0 0;padding:16px 20px;background:var(--soft);border-radius:10px;font-size:.9rem}.arc b{color:var(--ink)}
+footer{text-align:center;color:var(--muted);font-size:.82rem;padding:40px 0 60px}
+@media(max-width:560px){.facts{font-size:.78rem}.nl{padding:5px 7px;font-size:.72rem}}
+</style>
+</head>
+<body>
+<div class="nav">
+  <div class="nav-in">
+    <div class="brand">LobeChat <i>· MEGA exam companion</i></div>
+    <div class="nav-links">
+      <a class="nl" href="#picture">Maps</a>
+      <a class="nl" href="#evolution">Evolution</a>
+      <a class="nl" href="#b1">1·Two stacks</a>
+      <a class="nl" href="#b2">2·Docker</a>
+      <a class="nl" href="#b3">3·Data</a>
+      <a class="nl" href="#b4">4·Proxy/SSO</a>
+      <a class="nl" href="#b5">5·AI/MCP</a>
+      <a class="nl" href="#b6">6·Ship</a>
+      <a class="nl" href="#gotchas">Gotchas</a>
+      <a class="nl" href="#qa">Q&amp;A</a>
+    </div>
+  </div>
+  <div class="progress"><div id="pbar"></div></div>
+</div>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div class="eyebrow">ESADE C8 DevOps · the technical part · maximum-detail edition</div>
+    <h1>LobeChat-on-AWS, <em>down to the byte</em></h1>
+    <p class="deck">This is the tricky-details version. It reads the whole repository and pins down the exact images, tags, ports, environment variables, IAM actions and transports — the specifics a nasty MCQ hides distractors in. Every section has trap boxes and sample questions with reveal-able answers.</p>
+    <div class="warnbar">
+      <b>The #1 trap to internalise:</b> there are <b>two architectures</b> in this project. The <b>original/local</b> stack uses a local <code>vLLM</code> + Gemma model on host ports <code>4700x</code>. The version <b>we actually deployed to AWS</b> drops vLLM and uses <b>Bedrock (Claude) via LiteLLM</b>, with services on their native container ports behind Caddy. Read every question for which one it means. Chapter 1 untangles them.
+    </div>
+    <div class="meta"><span><b>10</b> services deployed</span><span><b>12</b> MCP servers</span><span><b>~40</b> trap-grade facts</span><span>pass = <b>5</b> · closed book · no LLM</span></div>
+  </div>
+</header>
+
+<!-- MAPS -->
+<section id="picture" style="background:#fff;border-bottom:1px solid var(--line)">
+  <div class="wide">
+    <div class="section-label">§ 0 — orientation</div>
+    <h2>The runtime, and the deploy</h2>
+    <div class="viz">
+      <svg viewBox="0 0 980 300" role="img" aria-label="runtime">
+        <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#1c1c1f"/></marker></defs>
+        <circle cx="40" cy="150" r="20" fill="#fff" stroke="#1c1c1f" stroke-width="1.5"/><text x="40" y="154" class="svg-s" text-anchor="middle">user</text>
+        <rect x="95" y="128" width="92" height="44" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/><text x="141" y="148" class="svg-t" text-anchor="middle">Caddy</text><text x="141" y="163" class="svg-s" text-anchor="middle">:80/:443</text>
+        <line x1="60" y1="150" x2="93" y2="150" stroke="#1c1c1f" stroke-width="1.5" marker-end="url(#ar)"/>
+        <rect x="235" y="60" width="110" height="44" rx="8" fill="#eef0ff" stroke="#5b6cff" stroke-width="1.5"/><text x="290" y="80" class="svg-t" text-anchor="middle">LobeChat</text><text x="290" y="95" class="svg-s" text-anchor="middle">:3210</text>
+        <rect x="235" y="128" width="110" height="40" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/><text x="290" y="152" class="svg-t" text-anchor="middle">Casdoor :8000</text>
+        <rect x="235" y="192" width="110" height="40" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/><text x="290" y="216" class="svg-t" text-anchor="middle">MinIO :9000</text>
+        <line x1="187" y1="145" x2="233" y2="90" stroke="#1c1c1f" stroke-width="1.4" marker-end="url(#ar)"/>
+        <line x1="187" y1="150" x2="233" y2="148" stroke="#1c1c1f" stroke-width="1.4" marker-end="url(#ar)"/>
+        <line x1="187" y1="158" x2="233" y2="208" stroke="#1c1c1f" stroke-width="1.4" marker-end="url(#ar)"/>
+        <rect x="400" y="40" width="120" height="40" rx="8" fill="#ccfbf1" stroke="#0d9488" stroke-width="1.5"/><text x="460" y="64" class="svg-t" text-anchor="middle">Postgres :5432</text>
+        <rect x="400" y="92" width="120" height="40" rx="8" fill="#ccfbf1" stroke="#0d9488" stroke-width="1.5"/><text x="460" y="116" class="svg-t" text-anchor="middle">Qdrant :6333</text>
+        <line x1="345" y1="78" x2="398" y2="62" stroke="#0d9488" stroke-width="1.3" marker-end="url(#ar)"/>
+        <rect x="575" y="60" width="130" height="40" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/><text x="640" y="84" class="svg-t" text-anchor="middle">MCPHub :3000</text>
+        <rect x="575" y="118" width="130" height="40" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/><text x="640" y="142" class="svg-t" text-anchor="middle">LiteLLM :4000</text>
+        <line x1="345" y1="82" x2="573" y2="80" stroke="#7c3aed" stroke-width="1.3" marker-end="url(#ar)"/>
+        <line x1="345" y1="86" x2="573" y2="138" stroke="#7c3aed" stroke-width="1.3" marker-end="url(#ar)"/>
+        <line x1="640" y1="100" x2="525" y2="112" stroke="#7c3aed" stroke-width="1.1" stroke-dasharray="3 3" marker-end="url(#ar)"/>
+        <text x="612" y="112" class="svg-s">qdrant-mcp</text>
+        <rect x="760" y="58" width="120" height="44" rx="8" fill="#fff" stroke="#1c1c1f" stroke-width="1.5"/><text x="820" y="78" class="svg-t" text-anchor="middle">Bedrock</text><text x="820" y="93" class="svg-s" text-anchor="middle">Claude (managed)</text>
+        <line x1="705" y1="138" x2="800" y2="104" stroke="#1c1c1f" stroke-width="1.3" marker-end="url(#ar)"/>
+        <rect x="575" y="176" width="130" height="36" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.3"/><text x="640" y="198" class="svg-s" text-anchor="middle">hayhooks 1416 / mcp 1417</text>
+        <line x1="640" y1="158" x2="640" y2="174" stroke="#7c3aed" stroke-width="1.1" marker-end="url(#ar)"/>
+        <text x="490" y="270" class="svg-s" text-anchor="middle">All ten boxes are containers on ONE EC2, on one Docker bridge network. Only Caddy publishes host ports. LiteLLM→Bedrock is the only call that leaves the box.</text>
+      </svg>
+      <p class="cap">Deployed (AWS) runtime. Note: no vLLM here — the model is Bedrock Claude reached through LiteLLM.</p>
+    </div>
+  </div>
+</section>
+
+<!-- EVOLUTION -->
+<section id="evolution">
+  <div class="wrap">
+    <div class="section-label">§ the story · how the solution grew up</div>
+    <h2>From "it runs" to a cloud product</h2>
+    <p class="lead">The repo's branches are the homework build-up. Each stage adds exactly one DevOps pillar, and the solution gets more professional step by step. Read it top to bottom for the global picture, then dive into the chapters.</p>
+
+    <div class="tl">
+      <div class="stage" data-s="1">
+        <div class="stage-top"><span class="ver">v1.x</span><h4>Just run the app</h4><span class="pillar">Containers</span></div>
+        <p class="what">Lift-and-shift LobeChat locally with Docker Compose. Installation instructions, nothing else.</p>
+        <div class="pc"><div class="pro"><b>Pro</b>It works — the fastest path to a running chat platform.</div><div class="con"><b>Con</b>Manual, single host, no automation, no tests, no cloud, not reproducibly deployable.</div></div>
+        <p class="why"><b>Why move on:</b> a working app you cannot reliably reproduce, test or deploy is not engineering yet.</p>
+      </div>
+
+      <div class="stage" data-s="2">
+        <div class="stage-top"><span class="ver">v2.x</span><h4>Add Continuous Integration</h4><span class="pillar">CI · GitHub Actions</span></div>
+        <p class="what">A first GitHub Actions workflow: clone LobeChat, run a type-check (~1 min) and ESLint (~2 min), manual <code>workflow_dispatch</code> trigger, 15-minute timeout.</p>
+        <div class="pc"><div class="pro"><b>Pro</b>First automation — quality checks run automatically, errors caught early.</div><div class="con"><b>Con</b>Only checks code; it does not build or deploy anything, and there is still no cloud infrastructure.</div></div>
+        <p class="why"><b>Why move on:</b> checking code is good, but the environment it runs in is still hand-built and unreproducible.</p>
+      </div>
+
+      <div class="stage" data-s="3">
+        <div class="stage-top"><span class="ver">v3.x</span><h4>Infrastructure as Code</h4><span class="pillar">IaC · CloudFormation</span></div>
+        <p class="what">An <code>infra/cloudformation.yml</code> describing VPC, EC2, PostgreSQL, MinIO and LobeChat, plus (briefly) a deploy workflow, later simplified to a manual CloudFormation deploy with an architecture diagram.</p>
+        <div class="pc"><div class="pro"><b>Pro</b>The cloud environment is now versioned code, reproducible, no console clicking, drift eliminated.</div><div class="con"><b>Con</b>Setup is baked into the EC2 UserData — provisioning and configuration are tangled in one script.</div></div>
+        <p class="why"><b>Why move on:</b> mixing "create the server" and "configure the server" in one blob does not scale or stay clean.</p>
+      </div>
+
+      <div class="stage" data-s="4">
+        <div class="stage-top"><span class="ver">v4.x</span><h4>Separate provisioning from configuration</h4><span class="pillar">Config mgmt · Ansible</span></div>
+        <p class="what">Replace the UserData script with an <b>Ansible playbook</b> (Postgres, MinIO, Node.js, LobeChat). CloudFormation becomes <b>infrastructure-only</b>. Two phases: CloudFormation provisions, then Ansible configures over SSH. Commitizen added.</p>
+        <div class="pc"><div class="pro"><b>Pro</b>Clean separation of concerns; idempotent, declarative configuration; the professional two-phase shape.</div><div class="con"><b>Con</b>More moving parts — inventory, SSH access, playbooks to maintain.</div></div>
+        <p class="why"><b>Why move on:</b> with the deploy mechanics solid, the project needs disciplined releases and real features.</p>
+      </div>
+
+      <div class="stage" data-s="5">
+        <div class="stage-top"><span class="ver">v5.x</span><h4>Release discipline</h4><span class="pillar">Versioning · SemVer</span></div>
+        <p class="what">Commitizen + semantic-version tags; version bumps (5.0.1 → 5.0.2) with no functional change — purely tightening the release process.</p>
+        <div class="pc"><div class="pro"><b>Pro</b>Predictable versions and automated changelogs; professional release hygiene and traceability.</div><div class="con"><b>Con</b>Pure process — adds no new capability by itself.</div></div>
+        <p class="why"><b>Why move on:</b> with process and pipeline in place, build out the actual product depth.</p>
+      </div>
+
+      <div class="stage" data-s="6">
+        <div class="stage-top"><span class="ver">main</span><h4>The full AI platform</h4><span class="pillar">Feature depth</span></div>
+        <p class="what">The rich stack: Qdrant + Hayhooks <b>RAG</b>, ~12 MCP servers behind MCPHub (with a custom Dockerfile for stdio deps), local <b>vLLM serving Gemma 4</b> with native function calling, screenshot agent, DB migrations.</p>
+        <div class="pc"><div class="pro"><b>Pro</b>A genuinely full-featured self-hosted AI platform: tools, retrieval, agents.</div><div class="con"><b>Con</b>Heavy and GPU-dependent (local vLLM), many fragile stdio MCP servers, high complexity.</div></div>
+        <p class="why"><b>Why move on:</b> to be examined and run cheaply on AWS, the GPU dependency and local assumptions had to go.</p>
+      </div>
+
+      <div class="stage" data-s="7">
+        <div class="stage-top"><span class="ver">lobechat-aws-cfn</span><h4>Cloud-production rewrite (our build)</h4><span class="pillar">Production deploy</span></div>
+        <p class="what">A clean CloudFormation rewrite. <b>Bedrock (Claude) via LiteLLM</b> replaces local vLLM (no GPU). HTTPS via <b>Caddy</b> + Let's Encrypt. No source modifications. Secrets handled at boot. One-command <code>deploy.sh</code>.</p>
+        <div class="pc"><div class="pro"><b>Pro</b>No GPU, vendor-flexible (swap models in one file), reproducible one-command deploy, HTTPS + SSO, complies with the teacher's rules.</div><div class="con"><b>Con</b>Sandbox deviations (AMI via DescribeImages, secrets on EBS) and a deliberately single-AZ, cost-optimised footprint.</div></div>
+        <p class="why"><b>The destination:</b> ship the platform to AWS professionally, cloud-native, within real constraints.</p>
+      </div>
+    </div>
+
+    <div class="arc"><b>The arc in one line:</b> App → CI → IaC → Configuration management → Release discipline → Features → Cloud production. Each homework bolts on one pillar, and that sequence is exactly the order of the theory blocks. If an exam question asks "why was X added", the honest answer is almost always "to fix the limitation the previous stage left behind".</div>
+  </div>
+</section>
+
+<!-- B1 TWO STACKS -->
+<article class="chapter" data-b="1" id="b1">
+  <div class="wrap">
+    <div class="ch-eyebrow">Chapter one · the meta-trap</div>
+    <h2><span class="num">01</span>The two stacks you must never confuse</h2>
+    <p class="lead">Half the trick questions exploit the gap between the repo's original local design and the version we deployed to AWS. Learn both columns.</p>
+    <table class="facts">
+      <tr><th>Concern</th><th>Original / local stack</th><th>What WE deployed (AWS, v2)</th></tr>
+      <tr><td>LLM</td><td>local <code>vLLM</code> serving Gemma 4, native function calling, port 47007</td><td><b>AWS Bedrock</b> (Claude Haiku/Sonnet) via <b>LiteLLM</b> on :4000 — no vLLM at all</td></tr>
+      <tr><td>Embeddings</td><td>OpenRouter / external HTTP</td><td>Bedrock <b>Titan v2</b> through LiteLLM (<code>titan-embed</code>)</td></tr>
+      <tr><td>Ports</td><td>host ports <code>4700x</code> (47000 LobeChat, 47002 Casdoor…)</td><td>native container ports behind Caddy; only 80/443 public</td></tr>
+      <tr><td>TLS / proxy</td><td>often raw / WSL hostname</td><td><b>Caddy</b> + Let's Encrypt on <code>nip.io</code>, three subdomains</td></tr>
+      <tr><td>IaC</td><td>(v1) Terraform</td><td><b>CloudFormation</b> single template (teacher's rule)</td></tr>
+      <tr><td>Alt provider</td><td>Anthropic via <b>Meridian</b> translator</td><td>Bedrock directly via LiteLLM</td></tr>
+    </table>
+    <div class="trap"><div class="lab">Trap</div>If a question says "how does the system pick which tool to call?" the answer is the same in both: <b>the LLM decides</b> (function calling). But if it mentions <b>vLLM / Gemma</b>, it's the local stack; if it mentions <b>Bedrock / LiteLLM / Claude</b>, it's our deploy. Don't mix the port numbers either: <code>47007</code> is vLLM (local), which does not exist in our AWS deploy.</div>
+    <div class="mcq"><div class="lab">Likely MCQ</div><div class="q">In the version deployed to AWS, what serves the language model?</div>
+      <ol type="A"><li>A local vLLM container running Gemma 4 on port 47007</li><li>AWS Bedrock (Claude), reached through LiteLLM acting as an OpenAI-compatible proxy</li><li>OpenAI's API directly from LobeChat</li><li>Casdoor</li></ol>
+      <details><summary>Answer</summary><div class="ans"><b>B.</b> vLLM is the local design; the AWS deploy uses Bedrock via LiteLLM. LobeChat still thinks it is talking to "OpenAI" because LiteLLM mimics that API.</div></details>
+    </div>
+  </div>
+</article>
+
+<!-- B2 DOCKER -->
+<article class="chapter" data-b="2" id="b2">
+  <div class="wrap">
+    <div class="ch-eyebrow">Chapter two · containers, exactly</div>
+    <h2><span class="num">02</span>Docker, Compose &amp; the exact images</h2>
+    <p class="lead">Tricky questions live in the precise image tags, the depends_on conditions and the one Dockerfile you build yourself.</p>
+    <table class="facts">
+      <tr><th>Service</th><th>Image (exact)</th><th>Key detail</th></tr>
+      <tr><td>caddy</td><td><code>caddy:2-alpine</code></td><td>only service with host ports 80/443</td></tr>
+      <tr><td>lobe-chat</td><td><code>lobehub/lobe-chat-database</code></td><td>untagged → pulls <code>:latest</code>; internal :3210</td></tr>
+      <tr><td>casdoor</td><td><code>casbin/casdoor:v2.13.0</code></td><td>pinned; <code>--createDatabase=true</code>; :8000</td></tr>
+      <tr><td>litellm</td><td><code>ghcr.io/berriai/litellm:main-latest</code></td><td>:4000; from GHCR not Docker Hub</td></tr>
+      <tr><td>mcphub</td><td><b>built</b> from <code>dockerfiles/mcphub.Dockerfile</code></td><td>extends <code>samanhappy/mcphub:latest</code>; :3000</td></tr>
+      <tr><td>qdrant</td><td><code>qdrant/qdrant:latest</code></td><td>:6333 REST / :6334 gRPC</td></tr>
+      <tr><td>hayhooks</td><td><code>deepset/hayhooks:v1.1.0</code></td><td>REST :1416</td></tr>
+      <tr><td>hayhooks-mcp</td><td><code>deepset/hayhooks:v1.1.0</code></td><td>installs <code>hayhooks[mcp]==1.1.0</code> at start; MCP :1417 <code>--json-response</code></td></tr>
+      <tr><td>minio</td><td><code>minio/minio:latest</code></td><td>API :9000, console :9001, region <code>us-east-1</code></td></tr>
+      <tr><td>postgres</td><td><code>pgvector/pgvector:pg16</code></td><td>container name <code>shared-postgres</code>; :5432; <code>shm_size 128mb</code></td></tr>
+    </table>
+
+    <div class="spot"><h4>Build vs pull — only MCPHub is built</h4><div class="sub">Why the one custom Dockerfile exists.</div>
+      <ul><li>Nine services <code>pull</code> a published image; <strong>only mcphub</strong> uses <code>build:</code>.</li>
+      <li>Its Dockerfile adds <strong>graphviz, libgraphviz-dev, gcc, docker.io</strong> on top of <code>samanhappy/mcphub:latest</code> — stdio MCP servers (diagrams, d2) need those binaries, and <code>docker.io</code> lets it spawn container-in-container tools.</li>
+      <li>It also bind-mounts <code>/var/run/docker.sock</code> so it can launch sibling containers (d2, linux-sandbox).</li></ul></div>
+
+    <div class="trap"><div class="lab">Trap · the :latest contradiction</div>The midterm's "best practice" answer is <b>avoid <code>:latest</code></b> (pin versions). Yet this real stack uses <code>:latest</code> for lobe-chat, qdrant, minio and <code>main-latest</code> for litellm. Both can be true: the MCQ wants the <b>principle</b> (pin for reproducibility), while the repo made a pragmatic dev choice. If asked "best practice", answer pin; if asked "what does the repo do", answer it floats on latest.</div>
+
+    <div class="trap"><div class="lab">Trap · depends_on is not "wait until ready"</div><code>depends_on</code> with <code>condition: service_started</code> only waits for the container to start, not to be usable. Only <code>service_healthy</code> waits for the healthcheck. LobeChat waits for postgres &amp; minio <b>healthy</b> but casdoor &amp; litellm only <b>started</b>.</div>
+
+    <div class="mcq"><div class="lab">Likely MCQ</div><div class="q">Which is the ONLY service that publishes ports to the host?</div>
+      <ol type="A"><li>LobeChat</li><li>Caddy</li><li>MinIO</li><li>All of them</li></ol>
+      <details><summary>Answer</summary><div class="ans"><b>B.</b> Only Caddy maps 80/443 to the host. Everything else is reachable only on the internal Docker bridge by service name — which is the whole point of forcing traffic through the proxy.</div></details>
+    </div>
+    <div class="mcq"><div class="lab">Likely MCQ · the Kubernetes question</div><div class="q">We already use Docker Compose. Why might we move to Kubernetes?</div>
+      <ol type="A"><li>Compose cannot run more than one container</li><li>To orchestrate containers across many hosts with scaling, self-healing and rolling updates</li><li>Kubernetes replaces the Docker runtime</li><li>HTTPS requires it</li></ol>
+      <details><summary>Answer</summary><div class="ans"><b>B.</b> Compose is single-host. Kubernetes is multi-host orchestration. It does not replace Docker; it schedules containers across a cluster.</div></details>
+    </div>
+  </div>
+</article>
+
+<!-- B3 DATA -->
+<article class="chapter" data-b="3" id="b3">
+  <div class="wrap">
+    <div class="ch-eyebrow">Chapter three · state, precisely</div>
+    <h2><span class="num">03</span>Postgres, MinIO, Qdrant — and the pgvector trap</h2>
+    <p class="lead">Three stores, and one beautiful trap about which one actually does the vector search.</p>
+    <div class="spot"><h4>PostgreSQL — operational data (and a decoy vector engine)</h4>
+      <ul><li>Image is <code>pgvector/pgvector:pg16</code> and <code>init-postgres.sql</code> creates databases <b>lobechat</b> and <b>casdoor</b>, then runs <code>CREATE EXTENSION vector</code> in lobechat.</li>
+      <li><strong>The trap:</strong> pgvector is installed but <b>not used for the RAG path</b>. Qdrant does the embedding search. Postgres holds users, sessions, messages, agent configs — and Casdoor's data.</li>
+      <li>One shared Postgres named <code>shared-postgres</code> serves both LobeChat and Casdoor.</li></ul></div>
+    <div class="spot"><h4>MinIO — S3 for files</h4>
+      <ul><li>API :9000, console :9001, <code>MINIO_REGION_NAME=us-east-1</code> (S3 SDKs expect a region), CORS allowed only from the LobeChat host.</li>
+      <li><strong>Path-style</strong> addressing (<code>S3_ENABLE_PATH_STYLE=1</code>) because MinIO does not do virtual-host buckets like real S3.</li>
+      <li>Healthcheck is <code>mc ready local</code>. The <code>lobe</code> bucket is created by the boot script (it does not auto-create).</li></ul></div>
+    <div class="spot"><h4>Qdrant — the actual vector DB</h4>
+      <ul><li>:6333 REST, :6334 gRPC; data in a volume; collection <code>rag-demo</code>.</li>
+      <li>RAG flow: docs → chunk → embed → store; query → embed → nearest-neighbour → top-k → inject into prompt.</li>
+      <li><strong>Reached via <code>qdrant-mcp</code> through MCPHub</strong>, never directly from the chat UI.</li></ul></div>
+    <div class="trap"><div class="lab">Trap · who stores the PDF vs who searches it</div>The raw PDF lives in <b>MinIO</b>. Its chunk <b>embeddings</b> live in <b>Qdrant</b>. Its <b>metadata/ownership</b> lives in <b>Postgres</b>. Three different stores for one upload.</div>
+    <div class="mcq"><div class="lab">Likely MCQ</div><div class="q">Postgres here is the <code>pgvector</code> image. What does the stack use for RAG vector search?</div>
+      <ol type="A"><li>pgvector inside Postgres</li><li>Qdrant (a dedicated vector database)</li><li>MinIO</li><li>Redis</li></ol>
+      <details><summary>Answer</summary><div class="ans"><b>B.</b> Despite pgvector being available, the RAG path uses Qdrant. Separation of concerns: transactional data in Postgres, embedding search in Qdrant.</div></details>
+    </div>
+    <div class="mcq"><div class="lab">Likely MCQ</div><div class="q">If Postgres crashes, what happens?</div>
+      <ol type="A"><li>Nothing, it is only for vectors</li><li>Login, chat history, agent config and message persistence fail — and Casdoor breaks too</li><li>Only file uploads fail</li><li>Caddy stops serving TLS</li></ol>
+      <details><summary>Answer</summary><div class="ans"><b>B.</b> Postgres is the source of truth for LobeChat and Casdoor both. Cached UI may load, but anything stateful dies.</div></details>
+    </div>
+  </div>
+</article>
+
+<!-- B4 PROXY/SSO -->
+<article class="chapter" data-b="4" id="b4">
+  <div class="wrap">
+    <div class="ch-eyebrow">Chapter four · the front door</div>
+    <h2><span class="num">04</span>Caddy, HTTPS &amp; Casdoor</h2>
+    <p class="lead">Why HTTPS is non-negotiable, why the raw IP is rejected, and the org trap that fails your login.</p>
+    <div class="spot"><h4>Caddy</h4><ul>
+      <li><code>caddy:2-alpine</code>, the only public service. Terminates TLS, auto-obtains a <b>Let's Encrypt</b> cert per hostname via HTTP-01, routes by host.</li>
+      <li>Three sibling hostnames on <code>nip.io</code>: <code>&lt;ip&gt;.nip.io</code> (LobeChat), <code>auth-&lt;ip&gt;.nip.io</code> (Casdoor), <code>s3-&lt;ip&gt;.nip.io</code> (MinIO). nip.io maps any dashed-IP name to that IP, so a CA will sign it.</li>
+      <li>A request to the raw IP over HTTP gets <code>421 Misdirected Request</code>; over HTTPS the handshake fails (no cert for an IP).</li></ul></div>
+    <div class="spot"><h4>Casdoor</h4><ul>
+      <li><code>casbin/casdoor:v2.13.0</code>, an OIDC/OAuth2/SAML identity provider, :8000, started with <code>--createDatabase=true</code>; config in <code>casdoor-app.conf</code> (httpport 8000, <code>origin</code> rewritten to the auth hostname at boot).</li>
+      <li>Seeded login: org <code>lobechat</code>, user <code>user</code>, password <code>pswd123</code>.</li></ul></div>
+    <div class="trap"><div class="lab">Trap · why HTTPS, really</div>Not "for security" in the abstract — <b>OAuth/SSO cookies</b>. Browsers refuse <code>Secure</code>/cross-site cookies over plain HTTP, so the Casdoor login round-trip silently fails. Self-signed certs are also rejected (warnings + broken callbacks). TLS, DNS, OAuth and cookies are coupled.</div>
+    <div class="trap"><div class="lab">Trap · the admin login that fails</div>The <code>admin</code> account exists only in Casdoor's <code>built-in</code> org. LobeChat uses the <code>lobechat</code> org. Logging in as <code>admin</code> fails; you must use <code>user</code>/<code>pswd123</code> in the <code>lobechat</code> org.</div>
+    <div class="mcq"><div class="lab">Likely MCQ</div><div class="q">Why is the public site served over HTTPS rather than HTTP?</div>
+      <ol type="A"><li>HTTP is deprecated by Docker</li><li>OAuth/SSO needs Secure cross-site cookies that browsers refuse over HTTP, so login fails without TLS</li><li>HTTPS is faster</li><li>Bedrock requires it</li></ol>
+      <details><summary>Answer</summary><div class="ans"><b>B.</b> The Casdoor login flow breaks on HTTP because of cookie rules. That is the concrete reason, beyond general confidentiality.</div></details>
+    </div>
+  </div>
+</article>
+
+<!-- B5 AI/MCP -->
+<article class="chapter" data-b="5" id="b5">
+  <div class="wrap">
+    <div class="ch-eyebrow">Chapter five · intelligence &amp; tools</div>
+    <h2><span class="num">05</span>LiteLLM, Bedrock, MCP &amp; MCPHub</h2>
+    <p class="lead">The densest trap field: model IDs, the function-calling decision, the aggregator, and stdio.</p>
+    <div class="spot"><h4>LiteLLM — the OpenAI→Bedrock bridge</h4><ul>
+      <li>Exact model map: <code>claude-haiku-4-5</code> → <code>bedrock/eu.anthropic.claude-haiku-4-5-20251001-v1:0</code>; sonnet-4-5/4-6 similar; <code>titan-embed</code> → <code>bedrock/amazon.titan-embed-text-v2:0</code>.</li>
+      <li><code>master_key: os.environ/LITELLM_MASTER_KEY</code> (literal string, resolved from env). LobeChat sends that key as its "OpenAI API key".</li>
+      <li><code>additional_drop_params: ["top_p"]</code> per Claude model — Bedrock Claude rejects requests with both temperature AND top_p.</li>
+      <li>Auth to Bedrock via the <b>EC2 instance role</b> (no key in env) — which needs the IMDS hop limit raised to 2 (Chapter 6).</li>
+      <li><b>Why it exists / anti lock-in:</b> swapping provider is a one-file config edit; LobeChat is unaware.</li></ul></div>
+    <div class="viz">
+      <svg viewBox="0 0 760 200" role="img" aria-label="mcp flow">
+        <defs><marker id="am" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#7c3aed"/></marker></defs>
+        <rect x="20" y="80" width="120" height="44" rx="8" fill="#eef0ff" stroke="#5b6cff" stroke-width="1.5"/><text x="80" y="100" class="svg-t" text-anchor="middle">LobeChat</text><text x="80" y="115" class="svg-s" text-anchor="middle">agent runtime</text>
+        <rect x="200" y="20" width="120" height="40" rx="8" fill="#fff" stroke="#1c1c1f" stroke-width="1.4"/><text x="260" y="44" class="svg-t" text-anchor="middle">LLM (Bedrock)</text>
+        <rect x="200" y="100" width="120" height="44" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.6"/><text x="260" y="120" class="svg-t" text-anchor="middle">MCPHub :3000</text><text x="260" y="134" class="svg-s" text-anchor="middle">aggregator</text>
+        <line x1="140" y1="95" x2="198" y2="50" stroke="#1c1c1f" stroke-width="1.3" marker-end="url(#am)"/><text x="150" y="62" class="svg-s">1. prompt+tools</text>
+        <line x1="260" y1="60" x2="160" y2="80" stroke="#1c1c1f" stroke-width="1.3" marker-end="url(#am)"/><text x="150" y="78" class="svg-s">2. tool_call JSON</text>
+        <line x1="140" y1="108" x2="198" y2="120" stroke="#7c3aed" stroke-width="1.3" marker-end="url(#am)"/><text x="150" y="135" class="svg-s">3. dispatch</text>
+        <rect x="380" y="20" width="150" height="26" rx="5" fill="#fff" stroke="#1c1c1f"/><text x="455" y="38" class="svg-s" text-anchor="middle">qdrant-mcp · stdio</text>
+        <rect x="380" y="54" width="150" height="26" rx="5" fill="#fff" stroke="#1c1c1f"/><text x="455" y="72" class="svg-s" text-anchor="middle">filesystem · stdio</text>
+        <rect x="380" y="88" width="150" height="26" rx="5" fill="#fff" stroke="#1c1c1f"/><text x="455" y="106" class="svg-s" text-anchor="middle">ssh-exec · stdio</text>
+        <rect x="380" y="122" width="150" height="26" rx="5" fill="#fff" stroke="#1c1c1f"/><text x="455" y="140" class="svg-s" text-anchor="middle">aws-docs · stdio</text>
+        <rect x="380" y="156" width="150" height="26" rx="5" fill="#ccfbf1" stroke="#0d9488"/><text x="455" y="174" class="svg-s" text-anchor="middle">haystack-mcp · streamable-http</text>
+        <line x1="320" y1="120" x2="378" y2="60" stroke="#7c3aed" stroke-width="1.1" marker-end="url(#am)"/>
+        <line x1="320" y1="124" x2="378" y2="135" stroke="#7c3aed" stroke-width="1.1" marker-end="url(#am)"/>
+        <text x="640" y="100" class="svg-s" text-anchor="middle">11 of 12 servers</text><text x="640" y="116" class="svg-s" text-anchor="middle">use stdio.</text><text x="640" y="132" class="svg-s" text-anchor="middle">Only haystack-mcp</text><text x="640" y="148" class="svg-s" text-anchor="middle">is streamable-http.</text>
+      </svg>
+      <p class="cap">The LLM decides to call a tool; LobeChat routes the call to MCPHub; MCPHub dispatches to the right server. MCPHub never talks to the LLM.</p>
+    </div>
+    <div class="spot"><h4>MCP &amp; MCPHub — the exact facts</h4><ul>
+      <li><b>The LLM decides</b> when to call a tool (function calling). MCPHub only <b>executes</b> after the model emits a <code>tool_call</code>. Order: prompt → LLM → (maybe) tool → LLM → answer.</li>
+      <li><b>Standard MCP</b> = one client ↔ one server. <b>MCPHub</b> = aggregator/proxy mounting ~12 servers behind one endpoint, so LobeChat connects <b>once</b> instead of supervising N stdio processes.</li>
+      <li>Servers (12): ssh-exec, notion-mcp, aws-resources-operations, filesystem, playwright, minio-mcp, d2, infrastructure-diagrams, qdrant-mcp, haystack-mcp, linux-sandbox, aws-documentation.</li>
+      <li><b>Transport:</b> all are <span class="pill stdio">stdio</span> except <span class="pill http">haystack-mcp streamable-http</span>. <b>stdio is MCP's weakness</b> — fragile long-lived sessions, especially through a proxy. "If the MCP makes you suffer, change the MCP" → swap transport/server.</li></ul></div>
+    <div class="spot"><h4>Hayhooks appears twice — one backend, two interfaces</h4><ul>
+      <li><b>REST :1416</b> (FastAPI + Swagger) for human/API clients; <b>MCP :1417</b> (<code>hayhooks mcp run --json-response</code>) for MCPHub → LobeChat.</li>
+      <li>Same Haystack pipelines (retriever → … → generator), exposed two ways. The MCP instance pip-installs <code>hayhooks[mcp]==1.1.0</code> at container start.</li></ul></div>
+    <div class="trap"><div class="lab">Trap · MCPHub does NOT talk to the model</div>A favourite distractor: "MCPHub sends instructions to vLLM/Bedrock." False. MCPHub is a <b>tool execution layer</b>. The model emits the call, LobeChat routes it to MCPHub, the result returns to the model as a <code>tool</code> message.</div>
+    <div class="mcq"><div class="lab">Likely MCQ</div><div class="q">What is MCP's main practical weakness in this stack?</div>
+      <ol type="A"><li>It cannot return text</li><li>The stdio transport is fragile for long-lived sessions, especially through a proxy</li><li>It needs a GPU</li><li>It only works with OpenAI</li></ol>
+      <details><summary>Answer</summary><div class="ans"><b>B.</b> stdio. 11 of 12 servers use it, and dropped sessions behind the proxy are why the MCP demo is fired early and why "change the MCP" is the advice.</div></details>
+    </div>
+    <div class="mcq"><div class="lab">Likely MCQ · why drop top_p</div><div class="q">Why does <code>litellm-config.yaml</code> set <code>additional_drop_params: ["top_p"]</code>?</div>
+      <ol type="A"><li>top_p slows inference</li><li>Bedrock-hosted Claude rejects requests that set BOTH temperature and top_p; LobeChat sends both, so top_p is stripped</li><li>It saves tokens</li><li>top_p is not supported by LiteLLM</li></ol>
+      <details><summary>Answer</summary><div class="ans"><b>B.</b> "temperature and top_p cannot both be specified" — dropping top_p leaves only temperature, which Bedrock accepts.</div></details>
+    </div>
+  </div>
+</article>
+
+<!-- B6 SHIP -->
+<article class="chapter" data-b="6" id="b6">
+  <div class="wrap">
+    <div class="ch-eyebrow">Chapter six · provision, configure, ship</div>
+    <h2><span class="num">06</span>CloudFormation, Ansible, GitHub &amp; secrets</h2>
+    <p class="lead">The deploy mechanics, the two sandbox deviations, and the secrets/source rules.</p>
+    <div class="spot"><h4>CloudFormation — what the template actually declares</h4><ul>
+      <li>Resources: VPC, subnet, internet gateway + attachment, route table + route, security group (22 from your IP, 80/443 public), EIP + association, IAM role + instance profile, the EC2.</li>
+      <li><code>AmiId</code> is a <b>parameter</b> resolved at deploy time by <code>deploy.sh</code> via <code>ec2 describe-images</code> (the SSM public-parameter route is denied in the sandbox).</li>
+      <li><b>MetadataOptions:</b> <code>HttpTokens: required</code> (IMDSv2) and <code>HttpPutResponseHopLimit: 2</code> — the 2 lets containers reach the instance metadata for the role.</li>
+      <li>Root volume gp3, 60 GB, <code>Encrypted: true</code>. Deploy needs <code>CAPABILITY_NAMED_IAM</code> (named role).</li>
+      <li>IAM <code>bedrock-invoke</code> policy: <code>bedrock:InvokeModel</code> + <code>InvokeModelWithResponseStream</code> on the account's inference-profiles and on foundation models <code>anthropic.*</code> + <code>amazon.titan-embed-*</code>.</li></ul></div>
+    <div class="spot"><h4>Why do we need Ansible? (teacher's note)</h4><ul>
+      <li><b>To deploy and set up software</b> on the machine — configuration management. Agentless (SSH + Python), push-based, idempotent.</li>
+      <li>In our project <code>bootstrap.sh</code> does this <b>imperatively</b> in bash; Ansible would do it <b>declaratively</b> with idempotent modules.</li>
+      <li>The relay: <b>CloudFormation provisions</b> the host → <b>Ansible (or the boot script) configures</b> it → <b>Docker runs</b> the app. Correct CI/CD order: build &amp; push image → provision with CloudFormation → generate inventory from stack outputs → run Ansible.</li></ul></div>
+    <div class="spot"><h4>Secrets &amp; source code rules</h4><ul>
+      <li><code>.env</code> = runtime secrets on the host, <b>gitignored</b>, generated at boot. <b>GitHub Secrets</b> = credentials for Actions via <code>${{ secrets.NAME }}</code>. Never commit secrets to the repo or the workflow YAML.</li>
+      <li><b>Modifying shipped source is bad practice</b> — breaks reproducibility and upgrades. We configure from outside; the v1 <code>route.js</code> patch was removed in v2.</li>
+      <li><b>Sandbox deviation:</b> SSM and <code>secretsmanager:CreateSecret</code> are denied, so secrets live in <code>/opt/lobechat/.env</code> (root, 0600) on the encrypted EBS volume. Documented, not ideal.</li></ul></div>
+    <div class="trap"><div class="lab">Trap · provisioning ≠ configuration</div>CloudFormation/Terraform <b>provision</b> (create the VPC, the empty EC2). Ansible <b>configures</b> (install packages, write files, start services). Docker <b>runs</b> the app. A question that asks "which tool installs software on the server" is Ansible, not CloudFormation.</div>
+    <div class="mcq"><div class="lab">Likely MCQ · order of operations</div><div class="q">Correct order in a CI/CD pipeline combining CloudFormation and Ansible?</div>
+      <ol type="A"><li>Run Ansible → create stack → build image → verify</li><li>Build &amp; push image → provision with CloudFormation → generate inventory from outputs → run Ansible</li><li>Create stack → build image → delete stack → run Ansible</li><li>Generate inventory → run Ansible → build image → create stack</li></ol>
+      <details><summary>Answer</summary><div class="ans"><b>B.</b> You must provision before you can configure; the inventory (which hosts to configure) comes from the stack's outputs.</div></details>
+    </div>
+    <div class="mcq"><div class="lab">Likely MCQ · IMDS hop limit</div><div class="q">Why is <code>HttpPutResponseHopLimit</code> set to 2 on the instance?</div>
+      <ol type="A"><li>For faster networking</li><li>So containers (one network hop away from the host) can reach the instance metadata service to get the IAM role credentials</li><li>To enable HTTPS</li><li>To allow two SSH sessions</li></ol>
+      <details><summary>Answer</summary><div class="ans"><b>B.</b> Default hop limit 1 blocks containers from IMDS. Raising it to 2 lets LiteLLM/MCPHub pick up the instance-role credentials for Bedrock/AWS calls.</div></details>
+    </div>
+  </div>
+</article>
+
+<!-- GOTCHAS -->
+<section id="gotchas" style="background:#fff;border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="section-label">§ appendix A · "why does this present an error?"</div>
+    <h2>The gotcha bank</h2>
+    <p class="lead">Every one of these is a ready-made "why did X fail" MCQ. Cause → fix.</p>
+    <table class="facts">
+      <tr><th>Symptom</th><th>Cause &amp; fix</th></tr>
+      <tr><td>File upload fails with browser "Mixed Content"</td><td>LobeChat signs the presigned URL with <code>S3_ENDPOINT</code> and hands it to the browser unchanged. Fix: set <code>S3_ENDPOINT = S3_PUBLIC_DOMAIN = NEXT_PUBLIC_S3_DOMAIN</code> (the public HTTPS host), not <code>http://minio:9000</code>.</td></tr>
+      <tr><td>Chat error: "Model use case details have not been submitted"</td><td>Bedrock Anthropic models need a one-time per-account use-case form in the console. Titan embed does <b>not</b> (only Anthropic gates on it).</td></tr>
+      <tr><td>Chat error: "temperature and top_p cannot both be specified"</td><td>LobeChat sends both; Bedrock Claude rejects. Fix: <code>additional_drop_params: ["top_p"]</code> in LiteLLM.</td></tr>
+      <tr><td>Container can't reach Bedrock ("unable to locate credentials")</td><td>IMDS unreachable from the container. Fix: <code>HttpPutResponseHopLimit: 2</code>.</td></tr>
+      <tr><td>Casdoor login as <code>admin</code> fails</td><td><code>admin</code> is only in the <code>built-in</code> org; LobeChat uses the <code>lobechat</code> org. Use <code>user</code>/<code>pswd123</code>.</td></tr>
+      <tr><td>Raw IP / port 47000 unreachable</td><td>By design. Only 80/443 open; raw-IP HTTPS fails handshake, HTTP returns 421.</td></tr>
+      <tr><td>MCP tool stops responding mid-session</td><td>stdio transport dropped. Fire the demo early after a fresh boot; longer term, switch to a streamable-http server.</td></tr>
+      <tr><td>Stack create rolls back on <code>ssm:GetParameter</code></td><td>Sandbox denies SSM. Don't use the SSM AMI parameter type; resolve the AMI via <code>ec2 describe-images</code> and pass it as a parameter.</td></tr>
+      <tr><td>EC2 clone fails at boot (private repo)</td><td>The repo must be public (or use a token) because user_data clones it unauthenticated.</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- QA -->
+<section id="qa">
+  <div class="wrap">
+    <div class="section-label">§ appendix B · rapid-fire</div>
+    <h2>Exam Q&amp;A bank</h2>
+    <p class="lead">Click to reveal. Covers the teacher's hints plus the deep details.</p>
+    <div class="qa">
+      <details><summary>Why do we need Ansible?</summary><div class="a">To <b>deploy and set up software</b> on a server (configuration management): install packages, write config, start services. Agentless (SSH), push-based, idempotent. Provisioning makes the box; Ansible configures it.</div></details>
+      <details><summary>What problem does MCPHub solve?</summary><div class="a">It <b>aggregates ~12 MCP servers behind one endpoint</b>, so LobeChat integrates once instead of supervising N separate stdio connections.</div></details>
+      <details><summary>MCP's weakness?</summary><div class="a"><b>stdio</b> transport — fragile long-lived sessions, worse through a proxy. 11 of 12 servers use it; only haystack-mcp is streamable-http.</div></details>
+      <details><summary>An MCP keeps failing — what do you do?</summary><div class="a"><b>Change the MCP</b>: swap stdio → streamable-http, or replace the server. Do not patch around it.</div></details>
+      <details><summary>Does MCPHub talk to the LLM?</summary><div class="a">No. The LLM emits a tool call, LobeChat routes it to MCPHub, MCPHub executes and returns the result. MCPHub is a tool execution layer, not an LLM client.</div></details>
+      <details><summary>What decides whether a tool is used?</summary><div class="a">The <b>LLM</b>, via function calling. If the prompt needs external data/side effects it emits a <code>tool_call</code>; otherwise it answers in plain text.</div></details>
+      <details><summary>Why does MCPHub need a custom Dockerfile?</summary><div class="a">Stdio servers need extra binaries (graphviz, libgraphviz-dev, gcc) and <code>docker.io</code> to spawn container-in-container tools. It extends <code>samanhappy/mcphub:latest</code>.</div></details>
+      <details><summary>Why is Hayhooks listed twice?</summary><div class="a">Same Haystack pipelines, two transports: REST :1416 (Swagger) and MCP :1417 (consumed by MCPHub).</div></details>
+      <details><summary>Postgres is pgvector — so what does RAG use?</summary><div class="a"><b>Qdrant</b>. pgvector is present but unused for RAG. Postgres holds operational + Casdoor data.</div></details>
+      <details><summary>How does LobeChat store data?</summary><div class="a">Postgres (structured + auth), MinIO/S3 (files), Qdrant (vectors). Three shapes, three stores.</div></details>
+      <details><summary>How does LobeChat reach the model (AWS deploy)?</summary><div class="a">OpenAI-format request → LiteLLM (:4000) → Bedrock (Claude), streamed back. LiteLLM auth via the EC2 instance role.</div></details>
+      <details><summary>Why HTTPS, not HTTP?</summary><div class="a">OAuth cookies must be Secure/cross-site, which browsers refuse over HTTP, so Casdoor login fails. Plus confidentiality. Self-signed is rejected.</div></details>
+      <details><summary>Why reject the raw IP / direct origin?</summary><div class="a">Traffic must go through the proxy hostname. Raw-IP HTTPS = handshake fail; HTTP = 421; only 80/443 open.</div></details>
+      <details><summary>If we have Docker, why Kubernetes?</summary><div class="a">Compose is single-host. Kubernetes orchestrates across a cluster: scaling, self-healing, rolling updates. It does not replace the container runtime.</div></details>
+      <details><summary>Why CloudFormation over the console?</summary><div class="a">IaC: versioned, reviewable, reproducible, drift-free. One template rebuilds the identical environment and tears it down cleanly.</div></details>
+      <details><summary>.env vs GitHub Secrets?</summary><div class="a">.env = runtime secrets on the host, gitignored. GitHub Secrets = credentials for CI/CD workflows via <code>${{ secrets.NAME }}</code>. Never commit secrets.</div></details>
+      <details><summary>Why not modify the shipped source?</summary><div class="a">It breaks reproducibility and upgrades. Configure from outside (env, compose, proxy). The v1 route.js patch was removed for this reason.</div></details>
+      <details><summary>Why is the LLM container before MCPHub in the flow?</summary><div class="a">The model must first decide <i>whether</i> to call a tool (inference). MCPHub only executes after that decision.</div></details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">MEGA companion · ESADE C8 DevOps · the LobeChat-on-AWS technical part. Closed-book MCQ · pass = 5. Pair with the MCQ trainer.</div>
+</footer>
+
+<script>
+const links=[...document.querySelectorAll('.nl')];
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){const id=e.target.id;links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+id))}}),{rootMargin:'-35% 0px -60% 0px'});
+document.querySelectorAll('section[id],article[id]').forEach(s=>obs.observe(s));
+addEventListener('scroll',()=>{const h=document.documentElement;const p=h.scrollTop/(h.scrollHeight-h.clientHeight)*100;document.getElementById('pbar').style.width=p+'%'});
+</script>
+</body>
+</html>

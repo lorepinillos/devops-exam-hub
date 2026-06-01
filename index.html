@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DevOps Exam Hub — LobeChat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ind:#5b6cff;--green:#15803d;--teal:#0d9488;--purp:#7c3aed;--red:#e11d48;--amber:#d97706;
+--bg:#fbfaf7;--ink:#1c1c1f;--body:#2d2d33;--muted:#6b7280;--line:#e8e6df;--soft:#f3f1ec;
+--serif:'Fraunces',Georgia,serif;--sans:'Inter',system-ui,sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto;padding:0 22px}
+.hero{padding:72px 0 30px}
+.eyebrow{font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:14px}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.2rem,5.5vw,3.4rem);line-height:1.08;letter-spacing:-.02em;color:var(--ink);margin-bottom:14px}
+h1 em{font-style:italic;color:var(--muted)}
+.deck{font-size:1.1rem;max-width:640px;margin-bottom:8px}
+h2{font-family:var(--serif);font-size:1.5rem;font-weight:500;color:var(--ink);margin:40px 0 6px}
+.sub{color:var(--muted);font-size:.92rem;margin-bottom:18px}
+.tools{display:flex;flex-direction:column;gap:16px;margin-bottom:20px}
+.tool{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);border-left:5px solid var(--ink);border-radius:14px;padding:20px 22px;background:#fff;transition:.15s}
+.tool:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.06)}
+.tool .row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.tool h3{font-family:var(--serif);font-size:1.3rem;color:var(--ink)}
+.prio{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 9px;border-radius:20px;color:#fff}
+.tool p{font-size:.93rem;color:var(--body)}
+.tool .when{font-size:.84rem;color:var(--muted);margin-top:8px}.tool .when b{color:var(--ink)}
+.t1{border-left-color:var(--purp)} .t1 .prio{background:var(--purp)}
+.t2{border-left-color:var(--red)} .t2 .prio{background:var(--red)}
+.t3{border-left-color:var(--amber)} .t3 .prio{background:var(--amber)}
+.t4{border-left-color:var(--ind)} .t4 .prio{background:var(--ind)}
+.t5{border-left-color:var(--teal)} .t5 .prio{background:var(--teal)}
+.plan{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:10px 0 50px}
+.plan h3{font-family:var(--serif);font-size:1.2rem;color:var(--ink);margin-bottom:10px}
+.plan ol{margin:0 0 0 20px}.plan li{margin-bottom:8px;font-size:.94rem}.plan b{color:var(--ink)}
+.note{font-size:.86rem;color:var(--muted);background:var(--soft);border-radius:10px;padding:14px 16px;margin-bottom:40px}
+footer{text-align:center;color:var(--muted);font-size:.82rem;padding:20px 0 60px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">ESADE C8 · DevOps &amp; MLOps · exam hub</div>
+    <h1>Everything to pass, <em>in one place</em></h1>
+    <p class="deck">Five study tools built from the LobeChat-on-AWS project and the course theory (scope: DevOps → Kubernetes). They're ordered below by the sequence and priority you should use them.</p>
+  </header>
+
+  <h2>The tools, in study order</h2>
+  <p class="sub">Priority badge = how much it moves your grade. Click any to open.</p>
+  <div class="tools">
+
+    <a class="tool t1" href="best-exam-tool.html">
+      <div class="row"><h3>1 · Best Exam Tool</h3><span class="prio">Priority 1 · drill</span></div>
+      <p>160 MCQ in 4 blocks (select-to-answer, wrong ones re-appear, star + break + timer + stats), short answers by topic, and flashcards. Your main practice engine.</p>
+      <div class="when"><b>Use it:</b> most of your study time. Active recall beats reading. Star weak questions and re-drill the starred set.</div>
+    </a>
+
+    <a class="tool t2" href="mega.html">
+      <div class="row"><h3>2 · Mega Companion</h3><span class="prio">Priority 2 · deep + tricky</span></div>
+      <p>The maximum-detail walkthrough: the two-architecture trap, exact images/ports/IAM, the evolution story (v1→v5→our v2), and a gotcha bank of "why does this error" cases.</p>
+      <div class="when"><b>Use it:</b> to learn the tricky specifics and the "why each change happened". Closest to how the teacher sets traps.</div>
+    </a>
+
+    <a class="tool t3" href="project.html">
+      <div class="row"><h3>3 · Project Companion</h3><span class="prio">Priority 3 · mental model</span></div>
+      <p>A clean component-by-component walkthrough of the LobeChat stack with sample MCQ and a "why" Q&amp;A bank. Builds the picture before you go deep.</p>
+      <div class="when"><b>Use it:</b> first, if the architecture still feels fuzzy. Read once top-to-bottom.</div>
+    </a>
+
+    <a class="tool t4" href="theory.html">
+      <div class="row"><h3>4 · Theory Companion</h3><span class="prio">Priority 4 · foundations</span></div>
+      <p>General DevOps/MLOps · GitHub · CI/CD · IaC · Docker · Ansible theory, each tied back to the project. Diagrams and exam moves.</p>
+      <div class="when"><b>Use it:</b> if the pure theory is rusty. Skim the blocks you're weak on.</div>
+    </a>
+
+    <a class="tool t5" href="midterm.html">
+      <div class="row"><h3>5 · Midterm Trainer</h3><span class="prio">Priority 5 · diagnostic</span></div>
+      <p>Your real midterm's 30 questions as an interactive quiz (practice or exam mode, scoring, review).</p>
+      <div class="when"><b>Use it:</b> as a warm-up / confidence check at the start, and again the day before.</div>
+    </a>
+
+  </div>
+
+  <div class="plan">
+    <h3>Suggested order</h3>
+    <ol>
+      <li><b>Diagnose</b> — run the <b>Midterm Trainer</b> once to see your baseline.</li>
+      <li><b>Build the picture</b> — read the <b>Project Companion</b> (and the <b>Theory Companion</b> for any weak topic).</li>
+      <li><b>Go deep</b> — work through the <b>Mega Companion</b>: the two-stack trap, the evolution, the gotchas.</li>
+      <li><b>Drill hard</b> — spend most time in the <b>Best Exam Tool</b>: all 4 MCQ blocks, then the short answers, then flashcards. Star what you miss and re-drill the starred set until clean.</li>
+      <li><b>Final pass</b> — re-do the Midterm Trainer and the Best Exam Tool "retry my mistakes" the day before.</li>
+    </ol>
+  </div>
+
+  <div class="note">Exam reality: <b>40 MCQ + 10 short answers</b>, closed book, no LLM, pass = 5. The graded skill is explaining <b>why</b> things happen — answer in cause→effect form. Scope ends at Kubernetes (no SageMaker). There is also a detailed plain-text master-notes file (<code>lobechat_exam_master_notes.txt</code>) as your reference.</div>
+
+  <footer>DevOps Exam Hub · built from the LobeChat-on-AWS final project + course theory.</footer>
+</div>
+</body>
+</html>

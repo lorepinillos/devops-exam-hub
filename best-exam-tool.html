@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Best Exam Tool — DevOps / LobeChat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ind:#5b6cff;--inds:#eef0ff;--green:#15803d;--greens:#dcfce7;--red:#e11d48;--reds:#ffe4e6;
+  --amber:#d97706;--ambers:#fef3c7;--teal:#0d9488;--teals:#ccfbf1;--purp:#7c3aed;--purps:#ede9fe;--sky:#0ea5e9;
+  --bg:#fbfaf7;--panel:#fff;--ink:#1c1c1f;--body:#2d2d33;--muted:#6b7280;--line:#e8e6df;--soft:#f3f1ec;
+  --serif:'Fraunces',Georgia,serif;--sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+code{font-family:var(--mono);font-size:.84em;background:var(--soft);padding:1px 5px;border-radius:4px;color:#9a3412}
+.wrap{max-width:820px;margin:0 auto;padding:0 20px}
+.topbar{position:sticky;top:0;z-index:30;background:rgba(251,250,247,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.tb-in{max-width:980px;margin:0 auto;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{font-family:var(--serif);font-weight:600;font-size:1rem;color:var(--ink);cursor:pointer}
+.brand i{font-style:italic;color:var(--muted);font-weight:400}
+.tb-right{display:flex;align-items:center;gap:14px;font-size:.8rem;font-weight:600;color:var(--muted)}
+.tb-right .timer{font-variant-numeric:tabular-nums}
+.homebtn{font-family:var(--sans);font-size:.8rem;font-weight:600;padding:7px 13px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);cursor:pointer}
+.homebtn:hover{background:var(--soft)}
+.progress{height:3px;background:var(--soft)}#pbar{height:100%;width:0;background:var(--ind);transition:width .25s}
+
+.screen{display:none}.screen.active{display:block;animation:fade .3s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+section{padding:46px 0 70px}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(2rem,5vw,3rem);line-height:1.08;letter-spacing:-.02em;color:var(--ink);margin-bottom:14px}
+h1 em{font-style:italic;color:var(--muted)}
+h2{font-family:var(--serif);font-size:1.7rem;font-weight:500;color:var(--ink);margin-bottom:8px}
+.eyebrow{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:12px}
+.deck{font-size:1.08rem;max-width:620px;margin-bottom:30px}
+.btn{font-family:var(--sans);font-size:.92rem;font-weight:600;padding:12px 22px;border-radius:10px;border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer;transition:.15s}
+.btn:hover{opacity:.88}.btn.ghost{background:transparent;color:var(--ink)}.btn.ghost:hover{background:var(--soft)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+.mode-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;margin-top:8px}
+.mode-card{text-align:left;border:1px solid var(--line);border-radius:16px;padding:26px 24px;background:#fff;cursor:pointer;transition:.15s;border-top:4px solid var(--ink)}
+.mode-card:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.06)}
+.mode-card.m1{border-top-color:var(--ind)}.mode-card.m2{border-top-color:var(--teal)}.mode-card.m3{border-top-color:var(--purp)}
+.mode-card .ic{font-size:1.6rem;margin-bottom:10px}
+.mode-card h3{font-family:var(--serif);font-size:1.25rem;color:var(--ink);margin-bottom:6px}
+.mode-card p{font-size:.9rem;color:var(--body);margin-bottom:10px}
+.mode-card .tagn{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.examnote{margin-top:30px;padding:15px 18px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:.88rem}.examnote b{color:var(--ink)}
+
+/* block selector */
+.block-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:20px}
+.block-card{text-align:left;border:1px solid var(--line);border-radius:14px;padding:22px;background:#fff;cursor:pointer;transition:.15s;border-left:4px solid var(--ind)}
+.block-card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.05)}
+.block-card h3{font-family:var(--serif);font-size:1.15rem;color:var(--ink);margin-bottom:4px}
+.block-card p{font-size:.84rem;color:var(--muted)}
+.starred-card{border-left-color:var(--amber);background:#fffdf7}
+
+/* MCQ */
+.q-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px}
+.q-counter{font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ind)}
+.q-right{display:flex;align-items:center;gap:10px}
+.q-tag{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--soft);padding:3px 10px;border-radius:20px}
+.starBtn{font-size:1.3rem;line-height:1;background:none;border:none;cursor:pointer;color:var(--muted)}
+.starBtn.on{color:var(--amber)}
+.q-text{font-family:var(--serif);font-size:1.32rem;font-weight:500;line-height:1.32;color:var(--ink);margin-bottom:22px}
+.options{display:flex;flex-direction:column;gap:11px;margin-bottom:20px}
+.option{display:flex;align-items:flex-start;gap:13px;text-align:left;padding:15px 17px;border:1.5px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;font-size:.95rem;color:var(--body);transition:.12s;width:100%;font-family:var(--sans);line-height:1.45}
+.option:hover:not(.locked){border-color:var(--ind)}
+.option .key{flex:none;width:25px;height:25px;border-radius:7px;background:var(--soft);color:var(--muted);font-weight:700;font-size:.8rem;display:grid;place-items:center}
+.option.correct{border-color:var(--green);background:var(--greens)}.option.correct .key{background:var(--green);color:#fff}
+.option.wrong{border-color:var(--red);background:var(--reds)}.option.wrong .key{background:var(--red);color:#fff}
+.option.locked{cursor:default}.mark{margin-left:auto;font-weight:700;align-self:center}
+.feedback{border-radius:12px;padding:15px 17px;margin-bottom:18px;font-size:.9rem;display:none;border:1px solid var(--line)}
+.feedback.show{display:block}.feedback.ok{background:var(--greens);border-color:var(--green)}.feedback.no{background:var(--reds);border-color:var(--red)}
+.feedback .lab{font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:.7rem;margin-bottom:4px;display:block}
+.feedback.ok .lab{color:var(--green)}.feedback.no .lab{color:var(--red)}.feedback b{color:var(--ink)}
+.nav-btns{display:flex;justify-content:flex-end;gap:12px;min-height:46px}
+
+/* break overlay */
+.overlay{position:fixed;inset:0;background:rgba(28,28,31,.5);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+.overlay.show{display:flex}
+.ov-card{background:#fff;border-radius:18px;padding:34px 30px;max-width:420px;text-align:center;border-top:5px solid var(--amber)}
+.ov-card h3{font-family:var(--serif);font-size:1.5rem;color:var(--ink);margin-bottom:8px}
+.ov-card p{font-size:.92rem;color:var(--body);margin-bottom:20px}
+.ov-card .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* result */
+.ring{width:160px;height:160px;margin:0 auto 18px}.verdict{font-family:var(--serif);font-size:1.4rem;text-align:center}
+.verdict.pass{color:var(--green)}.verdict.fail{color:var(--red)}.result-sub{text-align:center;color:var(--muted);margin-bottom:24px}
+.bd{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:22px}
+.bd h3{font-family:var(--serif);font-size:1.05rem;margin-bottom:12px;color:var(--ink)}
+.bd-row{display:flex;align-items:center;gap:12px;margin-bottom:7px;font-size:.86rem}.bd-row .name{width:140px}
+.bd-bar{flex:1;height:9px;background:var(--soft);border-radius:6px;overflow:hidden}.bd-fill{height:100%;border-radius:6px}
+.bd-row .frac{width:46px;text-align:right;color:var(--muted);font-weight:600}
+.review-item{background:#fff;border:1px solid var(--line);border-left:4px solid var(--red);border-radius:10px;padding:14px 16px;margin-bottom:10px;font-size:.88rem}
+.review-q{font-weight:600;color:var(--ink);margin-bottom:6px}
+.review-line .tag{font-weight:700;font-size:.68rem;text-transform:uppercase;margin-right:6px}.review-line.corr .tag{color:var(--green)}
+.actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:24px 0}
+
+/* short linear */
+.topicnav{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 26px;position:sticky;top:54px;background:var(--bg);padding:8px 0;z-index:10}
+.topicnav a{font-size:.78rem;font-weight:600;padding:6px 11px;border-radius:8px;text-decoration:none;color:var(--muted);background:#fff;border:1px solid var(--line)}
+.topicnav a:hover{color:var(--ink);background:var(--soft)}
+.topic-h{font-family:var(--serif);font-size:1.5rem;color:var(--ink);margin:36px 0 4px;padding-top:10px}
+.topic-rule{height:3px;width:50px;border-radius:3px;margin-bottom:16px}
+.qa-item{border:1px solid var(--line);border-radius:10px;margin-bottom:11px;background:#fff}
+.qa-item summary{cursor:pointer;padding:15px 18px;font-weight:600;color:var(--ink);font-size:.97rem;list-style:none;display:flex;gap:10px}
+.qa-item summary::-webkit-details-marker{display:none}.qa-item summary .qn{color:var(--muted);font-weight:700;flex:none}
+.qa-item[open] summary{border-bottom:1px solid var(--line)}.qa-item .a{padding:14px 18px 16px;font-size:.92rem;line-height:1.6}.qa-item .a b{color:var(--ink)}
+
+/* flashcards */
+.fc-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 24px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.seg button{font-family:var(--sans);font-size:.82rem;font-weight:600;padding:8px 15px;border:none;background:transparent;color:var(--muted);cursor:pointer}.seg button.on{background:var(--ink);color:#fff}
+.fc-filter{font-size:.82rem;color:var(--muted)}.fc-filter select{font-family:var(--sans);padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.grid{column-count:3;column-gap:14px}@media(max-width:820px){.grid{column-count:2}}@media(max-width:520px){.grid{column-count:1}}
+.fcard{break-inside:avoid;display:inline-block;width:100%;margin-bottom:14px;border:1px solid var(--line);border-radius:14px;background:#fff;padding:18px;cursor:pointer;transition:.15s;border-top:4px solid var(--ind)}
+.fcard:hover{box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.fcard .tp{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px}
+.fcard .fq{font-family:var(--serif);font-size:1.04rem;font-weight:500;color:var(--ink);line-height:1.3}
+.fcard .fa{font-size:.88rem;line-height:1.55;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);display:none}.fcard .fa b{color:var(--ink)}
+.fcard.flip .fa{display:block}.fcard.flip{border-top-color:var(--green)}.fcard .hint{font-size:.72rem;color:var(--muted);margin-top:10px}.fcard.flip .hint{display:none}
+.kdk{max-width:560px;margin:0 auto;text-align:center}
+.kdk-bar{font-size:.82rem;color:var(--muted);margin-bottom:14px;display:flex;justify-content:space-between}.kdk-bar b{color:var(--ink)}
+.bigcard{border:1px solid var(--line);border-radius:18px;background:#fff;padding:38px 28px;min-height:240px;display:flex;flex-direction:column;justify-content:center;border-top:5px solid var(--purp)}
+.bigcard .tp{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:14px}
+.bigcard .bq{font-family:var(--serif);font-size:1.4rem;font-weight:500;color:var(--ink);line-height:1.3}
+.bigcard .ba{font-size:.98rem;line-height:1.6;margin-top:18px;padding-top:16px;border-top:1px dashed var(--line);text-align:left;display:none}.bigcard .ba b{color:var(--ink)}.bigcard.flip .ba{display:block}
+.kdk-actions{display:flex;gap:12px;justify-content:center;margin-top:20px}.kdk-actions .know{border-color:var(--green);background:var(--green)}.kdk-actions .dont{border-color:var(--red);background:var(--red)}.kdk-flip{margin-top:18px}
+footer{text-align:center;color:var(--muted);font-size:.8rem;padding:30px 0 50px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="tb-in">
+    <div class="brand" onclick="go('home')">Best Exam Tool <i>· DevOps / LobeChat</i></div>
+    <div class="tb-right">
+      <span id="liveScore" style="display:none">First-try <b id="scoreNow">0</b></span>
+      <span class="timer" id="timer" style="display:none">00:00</span>
+      <button class="homebtn" id="homeBtn" style="display:none" onclick="go('home')">↩ Home</button>
+    </div>
+  </div>
+  <div class="progress"><div id="pbar"></div></div>
+</div>
+
+<!-- HOME -->
+<section class="screen active" id="home">
+  <div class="wrap">
+    <div class="eyebrow">ESADE C8 DevOps · exam prep · technical part + theory</div>
+    <h1>Drill until the <em>why</em> sticks</h1>
+    <p class="deck">The real exam is <b>40 MCQ + 10 short answers</b> on <b>why things happen</b>. This tool has a 160-question MCQ trainer in 4 blocks (select to answer, wrong ones re-appear, star your weak spots), a topic-by-topic short-answer reader, and flashcards. All English, built from the LobeChat project and the course theory (scope ends at Kubernetes).</p>
+    <div class="mode-grid">
+      <button class="mode-card m1" onclick="openMCQHome()"><div class="ic">📝</div><h3>MCQ trainer · 160 Q</h3><p>4 blocks of 40. Click to answer — green right, red wrong with the why. Wrong ones return after 3. Break every 7. Star questions.</p><div class="tagn">timed · shuffled · stats</div></button>
+      <button class="mode-card m2" onclick="go('short')"><div class="ic">📖</div><h3>Short answers — by topic</h3><p>The "why" questions in a linear read. Each answer hidden until you click — test yourself first.</p><div class="tagn" id="shortCount">42 questions · 6 topics</div></button>
+      <button class="mode-card m3" onclick="go('cards')"><div class="ic">🃏</div><h3>Flashcards</h3><p>Same "why" questions as cards. Pinterest grid (click to flip) or Know / Don't-know with re-drill.</p><div class="tagn">2 views · filter by topic</div></button>
+    </div>
+    <div class="examnote"><b>How the teacher grades:</b> understanding <i>why</i>, in cause→effect form ("we use X because the previous approach failed at Y"). Pass = 5. Closed book, no LLM.</div>
+  </div>
+</section>
+
+<!-- MCQ BLOCK SELECT -->
+<section class="screen" id="mcqhome">
+  <div class="wrap">
+    <div class="eyebrow">MCQ trainer · pick a block</div>
+    <h2>160 questions across 4 blocks</h2>
+    <p style="font-size:.94rem;color:var(--body)">Select to answer (instant green/red). Get one wrong and it comes back 3 questions later until you nail it. A break is offered every 7. Star tricky ones with ☆ to study them later.</p>
+    <div class="block-grid" id="blockList"></div>
+    <div style="margin-top:18px"><button class="block-card starred-card" id="starredBtn" style="width:100%;cursor:pointer" onclick="studyStarred()"><h3>★ Starred questions</h3><p id="starredP">your flagged questions, all blocks</p></button></div>
+  </div>
+</section>
+
+<!-- MCQ -->
+<section class="screen" id="mcq">
+  <div class="wrap">
+    <div class="q-top"><span class="q-counter" id="qCounter"></span><div class="q-right"><span class="q-tag" id="qTag"></span><button class="starBtn" id="starBtn" title="Star this question">☆</button></div></div>
+    <div class="q-text" id="qText"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="nav-btns"><button class="btn" id="nextBtn" style="display:none">Next</button></div>
+  </div>
+</section>
+
+<!-- MCQ RESULT -->
+<section class="screen" id="mresult">
+  <div class="wrap">
+    <svg class="ring" viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="#e8e6df" stroke-width="12"/><circle id="ringFill" cx="60" cy="60" r="52" fill="none" stroke="#15803d" stroke-width="12" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s"/><text x="60" y="58" text-anchor="middle" id="ringPct" style="font-family:var(--serif);font-size:30px;fill:#1c1c1f">0%</text><text x="60" y="78" text-anchor="middle" id="ringFrac" style="font-family:var(--sans);font-size:11px;fill:#6b7280">0/40</text></svg>
+    <div class="verdict" id="verdict">—</div><div class="result-sub" id="mresultSub"></div>
+    <div class="bd"><h3>First-attempt accuracy by topic</h3><div id="bdRows"></div></div>
+    <div class="actions"><button class="btn" id="retryBlock">Retry block</button><button class="btn ghost" id="retryWrong">Retry my mistakes</button><button class="btn ghost" onclick="openMCQHome()">Other blocks</button></div>
+    <h3 style="font-family:var(--serif);font-size:1.1rem;color:var(--ink);margin:6px 0 12px">The ones you missed first time</h3>
+    <div id="reviewList"></div>
+  </div>
+</section>
+
+<!-- SHORT LINEAR -->
+<section class="screen" id="short">
+  <div class="wrap">
+    <div class="eyebrow">Short answers · linear by topic</div><h2>The "why" questions</h2>
+    <p style="font-size:.95rem;color:var(--body);margin-bottom:4px">Answer in your head, then click to reveal. Aim for one or two sentences in cause→effect form.</p>
+    <div class="topicnav" id="topicnav"></div><div id="shortBody"></div>
+  </div>
+</section>
+
+<!-- FLASHCARDS -->
+<section class="screen" id="cards">
+  <div class="wrap">
+    <div class="eyebrow">Flashcards · same questions, two views</div><h2>Drill the "why"</h2>
+    <div class="fc-controls"><div class="seg" id="viewSeg"><button data-v="grid" class="on">Pinterest grid</button><button data-v="kdk">Know / Don't-know</button></div><span class="fc-filter">Topic: <select id="topicFilter"></select></span></div>
+    <div id="gridView"><div class="grid" id="grid"></div></div><div id="kdkView" style="display:none"></div>
+  </div>
+</section>
+
+<!-- BREAK OVERLAY -->
+<div class="overlay" id="breakOverlay"><div class="ov-card"><h3>Take a break?</h3><p>You've answered <b id="breakSeen">7</b>. Stretch, breathe, then come back — your timer is paused.</p><div class="row" id="breakRow"><button class="btn ghost" onclick="resumeNow()">Keep going</button><button class="btn" onclick="pauseHere()">Pause timer</button></div></div></div>
+
+<footer><div class="wrap">Best Exam Tool · ESADE C8 DevOps · from the LobeChat-on-AWS project + course theory. Stars saved in this browser.</div></footer>
+
+<script>
+/* ============================ DATA ============================ */
+const MCQ_B1=[
+
+
+{t:"Foundations",q:"In the course's framing, the primary aim of DevOps is to:",o:["Replace the operations team with a suite of automated tools","Shorten the path from a code change to a reliable release","Standardise one programming language across all the teams","Guarantee that software ships with no defects whatsoever"],c:1,e:"DevOps shrinks lead time and risk between change and production through culture + automation. It does not replace Ops, mandate a language, or promise zero bugs."},
+{t:"Foundations",q:"The DORA metric 'change failure rate' specifically measures the:",o:["Number of commits each developer pushes during a sprint","Share of deployments that cause a production incident","Average time engineers spend writing automated test code","Frequency with which the main branch is rebuilt fresh"],c:1,e:"Change failure rate = % of deploys that break prod. It is a stability metric, paired with MTTR; deploy frequency and lead time are the velocity pair."},
+{t:"Foundations",q:"MLOps extends DevOps mainly because a machine-learning system must also:",o:["Version and reproduce its data and trained models","Replace continuous integration with manual review steps","Avoid containers because models will not run in them","Deploy only to dedicated on-premise GPU server hardware"],c:0,e:"Code alone is not enough: behaviour depends on data + model + params, so all three must be versioned and reproducible, with drift monitoring."},
+{t:"Foundations",q:"Treating servers as 'cattle, not pets' means that you should:",o:["Keep each server alive for as long as is feasible","Replace a faulty server instead of repairing it live","Give every machine a unique name and manual care","Run just one application per host for clean isolation"],c:1,e:"Immutability: rebuild from the definition rather than hand-nursing a server, which removes drift and makes recovery deterministic."},
+{t:"Foundations",q:"The strongest reason to self-host the LLM stack rather than buy SaaS is to:",o:["Obtain strictly better answers than any frontier model","Keep data and control in-house, away from a vendor","Remove the need for any monitoring or operations work","Ensure the platform never has any downtime or errors"],c:1,e:"The win is control, confidentiality and vendor independence (and predictable cost). It does not beat frontier quality or remove ops work."},
+{t:"GitHub & CI/CD",q:"The pull request exists primarily so that a change can be:",o:["Stored forever without ever touching the main branch","Reviewed and automatically checked before it merges","Deployed straight to production with no human approval","Translated automatically between two programming languages"],c:1,e:"A PR is the gate where review and CI run before the change reaches main, keeping main releasable."},
+{t:"GitHub & CI/CD",q:"In semantic versioning, increasing the MINOR number signals a:",o:["Change that breaks backward compatibility for users","Backward-compatible feature added to the software","Small fix for a defect with no new functionality","Purely cosmetic edit to the documentation or comments"],c:1,e:"MAJOR = breaking, MINOR = backward-compatible feature, PATCH = fix. Docs edits are usually not even a release."},
+{t:"GitHub & CI/CD",q:"Sensitive values for a GitHub Actions workflow should be supplied by:",o:["Committing a .env file so the workflow can read it","Referencing encrypted repository secrets at run time","Pasting the raw values directly into the workflow file","Passing them as plain arguments on the command line"],c:1,e:"Use GitHub Secrets via ${{ secrets.NAME }}. Anything committed is permanent and visible; CLI args and YAML are exposed in logs."},
+{t:"GitHub & CI/CD",q:"Continuous Deployment differs from Continuous Delivery in that it:",o:["Runs the automated test suite before every single merge","Removes the manual approval gate before hitting production","Builds the artifact but never releases it anywhere at all","Needs a separate staging cluster for every code change"],c:1,e:"Both keep prod-ready artifacts; deployment removes the human approval that delivery keeps."},
+{t:"GitHub & CI/CD",q:"The base of the test pyramid (the most numerous tests) should be:",o:["Slow end-to-end tests that exercise the whole system","Many fast unit tests covering small isolated pieces","Manual exploratory tests performed by the QA engineers","Integration tests spanning two or three live services"],c:1,e:"Unit tests are fast, cheap and stable, so you keep many; E2E are slow and brittle, so few."},
+{t:"GitHub & CI/CD",q:"Running CI on every pull request is recommended chiefly because it:",o:["Removes the need to ever write any automated tests","Surfaces breakages early while the change is still small","Guarantees the deployed application can never crash","Lets developers skip code review for trivial edits"],c:1,e:"Small, frequent integration catches problems early and cheaply; it does not replace tests or guarantee no crashes."},
+{t:"GitHub & CI/CD",q:"GitHub Actions jobs run in parallel unless a dependency is declared with:",o:["The after keyword placed at the top of the workflow","The needs keyword naming the jobs to wait for","The depends_on keyword borrowed from Docker Compose","No keyword, since jobs always run strictly in sequence"],c:1,e:"needs: orders jobs. depends_on is Compose, not Actions; after is not a thing."},
+{t:"GitHub & CI/CD",q:"In GitHub Actions terminology, a 'runner' is best described as the:",o:["YAML file that lists the triggers and all the jobs","Virtual machine that actually executes the job steps","Secret store that holds the deployment credentials","Dashboard that shows whether a workflow has passed"],c:1,e:"A runner is the machine (e.g. ubuntu-latest) that executes a job's steps."},
+{t:"IaC",q:"The core promise of Infrastructure as Code is that environments become:",o:["Cheaper to build than provisioning them by hand","Defined in versioned, reproducible code files","Able to scale up automatically whenever traffic rises","Audited automatically whenever someone clicks the console"],c:1,e:"IaC = versioned, reproducible, reviewable infra with no drift. Autoscaling and cost are separate concerns."},
+{t:"IaC",q:"A declarative IaC tool expects you to describe the:",o:["Exact ordered steps needed to build each resource","Desired end state, leaving the engine to reach it","Shell script that provisions every resource in turn","Billing limits the account must never exceed at runtime"],c:1,e:"Declarative = state the goal; the engine reconciles. Imperative = you script the steps."},
+{t:"IaC",q:"Idempotency in IaC means that applying the same configuration will:",o:["Run noticeably faster on each subsequent execution","Leave the system in the same state however often run","Be permitted only one single time per cloud account","Delete and rebuild every resource from scratch each run"],c:1,e:"Re-applying converges to the same state, so it is safe to run repeatedly."},
+{t:"IaC",q:"A genuine advantage of Terraform over CloudFormation is that it:",o:["Needs no state tracking of the resources it manages","Works across many cloud providers, not only AWS","Is free to use whereas CloudFormation bills per stack","Integrates more deeply with native AWS-only services"],c:1,e:"Terraform is multi-cloud. It does manage state; CloudFormation is the AWS-native one with deeper AWS integration."},
+{t:"IaC",q:"By default, when a CloudFormation stack update fails midway, the service will:",o:["Leave the half-updated resources in an inconsistent state","Roll the stack back to its previous known-good state","Delete the whole stack so you can recreate it fresh","Pause and wait for an operator to intervene by hand"],c:1,e:"Automatic rollback to the last good state is the default safety behaviour."},
+{t:"IaC",q:"Our CloudFormation passes the AMI as a parameter mainly because the:",o:["Hardcoding of an AMI id would be faster to write","Sandbox denies reading the SSM public AMI parameter","Template cannot reference any Ubuntu image at all","Bedrock service requires a specific custom-built image"],c:1,e:"ssm:GetParameter is denied, so the native SSM-AMI type would fail; deploy.sh resolves it via DescribeImages and passes it in."},
+{t:"Docker",q:"A container is lighter than a virtual machine principally because it:",o:["Compresses the application's code far more aggressively","Shares the host kernel instead of bundling a full OS","Runs only on bare-metal servers without any host OS","Strips out the application's dependencies before starting"],c:1,e:"Containers share the host kernel; VMs each carry a full guest OS, which is the weight."},
+{t:"Docker",q:"The correct relationship between a Docker image and a container is that the:",o:["Container is the blueprint and the image is the instance","Image is the blueprint and the container is the instance","Two are identical concepts with two different names","Image is produced by a container when the container stops"],c:1,e:"Image = immutable blueprint; container = a running instance of it."},
+{t:"Docker",q:"Avoiding the :latest tag in production matters mainly because that tag:",o:["Makes the resulting image substantially larger on disk","Is mutable and can pull an unexpected version later","Cannot be retrieved from most of the public registries","Stops the container from ever being restarted cleanly"],c:1,e:":latest floats, so a rebuild can silently pull a different version, breaking reproducibility."},
+{t:"Docker",q:"In docker run -p 8080:3000 myapp, the port mapping means that:",o:["The container is assigned the address eight-zero-eight-zero","Host port 8080 forwards traffic to container port 3000","Both ports are opened at once on the host machine","Container port 8080 is exposed to the host as 3000"],c:1,e:"-p HOST:CONTAINER, so host 8080 → container 3000."},
+{t:"Docker",q:"Docker Compose is best described as a tool whose purpose is to:",o:["Compile container images much faster than plain Docker","Define and run a multi-container app from one YAML file","Convert virtual machines into containers automatically","Replace Docker entirely with a simpler container engine"],c:1,e:"Compose declares and runs a multi-service app on a single host from one file."},
+{t:"Docker",q:"In our compose file only Caddy publishes host ports because the:",o:["Other containers do not expose any network ports at all","Traffic must reach the stack only through the proxy","Docker engine forbids two services from binding a port","Publishing more ports would slow the bridge network down"],c:1,e:"Forcing traffic through the reverse proxy is the design; internal services stay private on the bridge."},
+{t:"Docker",q:"A depends_on with condition service_started guarantees only that the:",o:["Dependency has fully finished all of its startup work","Dependency container has started, not that it is ready","Dependency has passed every one of its health checks","Dependency will restart by itself if it later crashes"],c:1,e:"service_started waits only for the container to start; only service_healthy waits for the healthcheck."},
+{t:"Docker",q:"A Docker security best practice highlighted in the course is to:",o:["Run every container as root to dodge permission issues","Use a slim base image and a non-root user inside it","Bake the API keys into the image so they travel along","Pick the largest base image to bundle all useful tools"],c:1,e:"Slim base (smaller attack surface) + non-root user; never bake secrets into the image."},
+{t:"Docker",q:"In the deployed stack, Postgres uses the pgvector image, yet RAG search is served by:",o:["The pgvector extension running inside the Postgres database","Qdrant, reached through qdrant-mcp via MCPHub","Casdoor querying its built-in organisation directory","LiteLLM performing a nearest-neighbour search itself"],c:1,e:"pgvector is present but unused for RAG; Qdrant is the vector store, reached through the qdrant-mcp server."},
+{t:"Ansible",q:"Ansible is described as 'agentless' because it:",o:["Needs a small daemon installed on each managed node","Connects over SSH with no software pre-installed on targets","Pulls its configuration from a central server on a timer","Runs entirely inside one container on the control node"],c:1,e:"It rides over SSH (plus Python on the target); no agent is installed, unlike Chef/Puppet."},
+{t:"Ansible",q:"Ansible's 'push' model means that the configuration is:",o:["Pulled by an agent on each node from a central repo","Initiated by the control node connecting out to the nodes","Committed to a Git repository for nodes to fetch later","Reported by the servers upward to a monitoring dashboard"],c:1,e:"The control node initiates the SSH connection and pushes config out."},
+{t:"Ansible",q:"A handler in an Ansible playbook executes only when it is:",o:["Listed at the very top of the playbook before any task","Notified by a task that actually changed the system state","Scheduled to run on a fixed recurring time interval","Manually invoked by the operator from the command line"],c:1,e:"Handlers run on notify, only when a task reports a change (e.g. restart after config changed)."},
+{t:"Ansible",q:"Modules are preferred over raw shell commands in playbooks because they:",o:["Always execute considerably faster than the equivalent commands","Check current state first, so they are idempotent by design","Encrypt every piece of data they send across the link","Are the only constructs permitted to use elevated privileges"],c:1,e:"Modules check state before acting, so re-running is safe. Raw shell blindly re-executes."},
+{t:"Ansible",q:"When combining CloudFormation and Ansible, the correct order of work is to:",o:["Configure with Ansible first, then provision the infrastructure","Provision the infrastructure first, then configure it with Ansible","Run both at the same time to cut total deployment time","Configure, then destroy, then provision the resources again"],c:1,e:"You cannot configure a machine that does not exist; the inventory also comes from the stack outputs."},
+{t:"LobeChat project",q:"In the AWS deployment, LobeChat reaches the language model through:",o:["A direct call from the browser to the Bedrock endpoint","LiteLLM, which turns OpenAI calls into Bedrock calls","A local vLLM container serving Gemma on the instance","The Casdoor identity provider acting as an API gateway"],c:1,e:"LiteLLM is the OpenAI-compatible bridge to Bedrock; vLLM is the local design, not the AWS deploy."},
+{t:"LobeChat project",q:"The raw bytes of a user-uploaded file are stored by the stack in:",o:["PostgreSQL, encoded as a single large binary column","MinIO, which is the S3-compatible object storage","Qdrant, next to the vector embedding of its chunks","The Caddy reverse proxy's on-disk response cache"],c:1,e:"Files live in MinIO; Postgres holds metadata, Qdrant holds embeddings."},
+{t:"LobeChat project",q:"The decision of whether to call a tool on a given turn is made by the:",o:["MCPHub aggregator inspecting the user's raw prompt","Language model, which emits a tool call when needed","Caddy reverse proxy based on the request's hostname","Postgres database through a trigger on the messages table"],c:1,e:"Tool choice is an inference decision (function calling) by the LLM; MCPHub only executes the call."},
+{t:"LobeChat project",q:"MCPHub's central role in the architecture is to:",o:["Decide each turn whether the model should call a tool","Aggregate many MCP servers behind one unified endpoint","Translate Anthropic replies into the OpenAI message format","Issue the TLS certificates used by the public hostnames"],c:1,e:"MCPHub aggregates ~12 MCP servers so LobeChat integrates once. The LLM decides; LiteLLM translates; Caddy does TLS."},
+{t:"LobeChat project",q:"The practical weakness of MCP that the project ran into is that the:",o:["Protocol can only return plain text and never structured data","Stdio transport drops long-lived sessions behind a proxy","Protocol needs a Kubernetes cluster to run many servers","Protocol works only with locally hosted open-source models"],c:1,e:"Stdio is fragile for long-lived sessions through a proxy; hence demo early or change the MCP."},
+{t:"LobeChat project",q:"LiteLLM drops the top_p parameter for Claude models because Bedrock:",o:["Charges noticeably more when top_p is included in a call","Claude rejects requests that set temperature and top_p together","Cannot receive the top_p value sent by the LobeChat client","Reserves top_p for the Titan embedding model exclusively"],c:1,e:"\"temperature and top_p cannot both be specified\"; dropping top_p leaves only temperature."},
+{t:"LobeChat project",q:"The public site must be served over HTTPS chiefly because over plain HTTP:",o:["Every response is transferred noticeably more slowly to users","OAuth login cookies are refused by the browser, so login fails","Bedrock will not accept any request that originates on HTTP","Docker requires TLS for the containers to talk to each other"],c:1,e:"Secure/cross-site OAuth cookies are blocked on HTTP, breaking the Casdoor login round-trip."},
+{t:"LobeChat project",q:"The instance metadata hop limit is set to two so that the:",o:["Box can accept two simultaneous SSH sessions at once","Containers can reach the metadata service for role credentials","Instance is recovered automatically after a hardware failure","Elastic IP can be associated before the instance has booted"],c:1,e:"Default hop limit 1 blocks containers from IMDS; raising it to 2 lets LiteLLM pick up the instance-role credentials."}
+];
+const MCQ_B2=[
+{t:"Stack",q:"Which image does the postgres service actually use?",o:["pgvector/pgvector:pg16","postgres:16-alpine library image","supabase/postgres:16 distribution","timescale/timescaledb:pg16"],c:0,e:"pgvector/pgvector:pg16 \u2014 the vector extension is available, though RAG uses Qdrant."},
+{t:"Stack",q:"The Casdoor image is pinned to which tag?",o:["casbin/casdoor:v2.13.0 (pinned)","casbin/casdoor:latest (floating)","casdoor/casdoor:v2 (major)","casbin/casdoor:stable (alias)"],c:0,e:"v2.13.0 is pinned, unlike most services here that float on latest."},
+{t:"Stack",q:"Which service is BUILT from a local Dockerfile, not pulled?",o:["MCPHub, built from a local Dockerfile","LobeChat, pulled as a published image","LiteLLM, pulled as a published image","Caddy, pulled as a published image"],c:0,e:"Only mcphub uses build:; the rest pull published images."},
+{t:"Stack",q:"What does the mcphub Dockerfile add on top of its base?",o:["graphviz, libgraphviz-dev, gcc and docker CLI","the NVIDIA GPU driver and CUDA build toolkit","nginx with certbot for automatic TLS certs","a full Kubernetes and Helm client toolkit"],c:0,e:"System deps for stdio MCP servers, plus the docker CLI for container-in-container."},
+{t:"Stack",q:"LiteLLM's image is pulled from which registry?",o:["GitHub Container Registry (ghcr.io)","the Docker Hub library namespace","AWS Elastic Container Registry Public","the Quay.io community registry"],c:0,e:"ghcr.io/berriai/litellm:main-latest."},
+{t:"Stack",q:"Inside the stack, which is the only service that publishes host ports?",o:["Caddy, on ports 80 and 443","LobeChat, on its app port","MinIO, on the API and console","Postgres, on the database port"],c:0,e:"Everything else is reachable only on the internal Docker bridge."},
+{t:"Stack",q:"LobeChat reaches Postgres using which address?",o:["postgres:5432 on the Docker network","the host public IP and a port","a managed Amazon RDS endpoint","localhost:5432 on the EC2 host"],c:0,e:"Service-name DNS on the shared compose network."},
+{t:"Stack",q:"A depends_on with condition service_healthy waits until the dependency has:",o:["passed its configured healthcheck","merely started its main process","been pulled from its registry","published a port to the host"],c:0,e:"service_started only waits for start; service_healthy waits for the healthcheck."},
+{t:"Stack",q:"The postgres container's name in the compose file is:",o:["shared-postgres","lobe-postgres","db","pgvector"],c:0,e:"container_name: shared-postgres \u2014 it serves both LobeChat and Casdoor."},
+{t:"Data",q:"The init-postgres.sql script creates which databases?",o:["lobechat and casdoor","only the lobechat database","only the casdoor database","lobechat, casdoor and minio"],c:0,e:"Plus CREATE EXTENSION vector inside lobechat."},
+{t:"Data",q:"RAG vector search in the deployed stack is served by:",o:["Qdrant, via the qdrant-mcp server","pgvector inside the Postgres database","MinIO object metadata tags","the Casdoor user directory"],c:0,e:"pgvector exists but is unused for RAG; Qdrant is the vector store."},
+{t:"Data",q:"MinIO is configured with which region name?",o:["us-east-1","eu-west-1","sa-east-1","minio-local"],c:0,e:"MINIO_REGION_NAME=us-east-1 \u2014 S3 SDKs expect a region string."},
+{t:"Data",q:"The MinIO web console listens on which container port?",o:["9001 (API is on 9000)","9000 (API is on 9001)","8000 (same as Casdoor)","47006 (host mapping)"],c:0,e:"API 9000, console 9001."},
+{t:"Data",q:"Qdrant exposes which pair of ports?",o:["6333 REST and 6334 gRPC","5432 REST and 5433 gRPC","9000 API and 9001 console","1416 REST and 1417 MCP"],c:0,e:"6333 REST, 6334 gRPC."},
+{t:"Data",q:"The raw bytes of an uploaded file are stored in:",o:["MinIO, the object storage service","Postgres, as a binary column","Qdrant, beside the embedding","the Caddy on-disk response cache"],c:0,e:"Files in MinIO, metadata in Postgres, embeddings in Qdrant."},
+{t:"AI & MCP",q:"In the AWS deployment, the language model is served by:",o:["Bedrock, reached through LiteLLM","a local vLLM container on the box","the OpenAI API called directly","Casdoor acting as a gateway"],c:0,e:"vLLM is the local design; AWS uses Bedrock via LiteLLM."},
+{t:"AI & MCP",q:"LiteLLM maps claude-haiku-4-5 to which backend model id?",o:["a Bedrock eu.anthropic Claude Haiku profile","an OpenAI gpt-4o-mini hosted chat model id","an Anthropic claude-3-5-haiku direct API id","a Bedrock amazon.titan-text-express model"],c:0,e:"A Bedrock eu.* cross-region inference profile id."},
+{t:"AI & MCP",q:"The embedding model served through LiteLLM is:",o:["titan-embed (Bedrock Titan v2)","text-embedding-3-small (OpenAI)","an OpenRouter embedding model","a Qdrant built-in embedder"],c:0,e:"bedrock/amazon.titan-embed-text-v2:0, no use-case form needed."},
+{t:"AI & MCP",q:"LiteLLM drops top_p for Claude because Bedrock:",o:["rejects temperature and top_p together","charges extra whenever top_p is set","cannot parse the top_p parameter","reserves top_p for the Titan model"],c:0,e:"'temperature and top_p cannot both be specified'."},
+{t:"AI & MCP",q:"Standard MCP links one client to one server; MCPHub instead:",o:["aggregates many servers behind one endpoint","runs the language model inference itself","stores the chat history for the app","issues the TLS certificates for hosts"],c:0,e:"One integration point for ~12 servers."},
+{t:"AI & MCP",q:"Across the ~12 MCP servers, the transport split is:",o:["all but one stdio (only haystack is http)","all twelve use streamable-http","exactly half stdio, half over http","all twelve use the stdio transport"],c:0,e:"Only haystack-mcp is streamable-http; the rest are stdio."},
+{t:"AI & MCP",q:"Which component DECIDES that a tool should be called?",o:["the language model (function calling)","the MCPHub aggregator service","the Caddy reverse proxy layer","a Postgres trigger on messages"],c:0,e:"Tool choice is inference; MCPHub only executes the call."},
+{t:"AI & MCP",q:"Hayhooks runs twice because it exposes the pipelines as:",o:["REST on 1416 and MCP on 1417","two different programming languages","two separate database backends","two distinct TLS certificates"],c:0,e:"Same pipelines, two transports."},
+{t:"AI & MCP",q:"The practical weakness of MCP in this project is:",o:["fragile stdio long-lived sessions","an inability to return any text","a hard requirement for Kubernetes","support for OpenAI models only"],c:0,e:"Stdio sessions drop, worse behind a proxy."},
+{t:"Proxy & Auth",q:"Caddy obtains its TLS certificate from:",o:["Let's Encrypt, automatically","a self-signed local authority","AWS Certificate Manager","the Casdoor identity service"],c:0,e:"Automatic HTTP-01 per hostname."},
+{t:"Proxy & Auth",q:"The public hostnames rely on which DNS trick?",o:["nip.io maps a dashed IP to that IP","a Route 53 hosted zone record","a paid domain-registrar entry","an /etc/hosts edit on the client"],c:0,e:"nip.io lets a CA sign a name that points at the IP."},
+{t:"Proxy & Auth",q:"A request to the raw IP over plain HTTP returns:",o:["421 Misdirected Request","200 OK with the home page","a 301 redirect to HTTPS","a 500 internal server error"],c:0,e:"Caddy host-matching rejects the unexpected host."},
+{t:"Proxy & Auth",q:"The site needs HTTPS chiefly because over HTTP:",o:["OAuth login cookies are refused","every response loads more slowly","Bedrock will block the request","Docker cannot network the apps"],c:0,e:"Secure/cross-site cookies break the Casdoor flow on HTTP."},
+{t:"Proxy & Auth",q:"The seeded Casdoor login that actually works is:",o:["org lobechat, user user, password pswd123","org built-in, user admin, password admin","org casdoor, user root, password casdoor","org lobe, user demo, password demodemo"],c:0,e:"admin only exists in the built-in org, which LobeChat does not use."},
+{t:"Proxy & Auth",q:"Casdoor is started with which command flag?",o:["--createDatabase=true","--init-data-only","--migrate-now","--seed-users"],c:0,e:"It creates its schema on first run."},
+{t:"Deploy & IaC",q:"The CloudFormation AMI is a parameter mainly because:",o:["the sandbox denies the SSM AMI parameter read","AMIs simply cannot be referenced anywhere","Bedrock requires a custom-built machine image","typing the AMI id out by hand is just faster"],c:0,e:"The SSM-AMI parameter type would fail; deploy.sh resolves it instead."},
+{t:"Deploy & IaC",q:"deploy.sh resolves the AMI using which API call?",o:["ec2 describe-images","ssm get-parameter","ec2 run-instances","s3 list-objects"],c:0,e:"Filtered by Canonical owner and a name pattern."},
+{t:"Deploy & IaC",q:"The instance metadata hop limit is set to two so that:",o:["containers can reach IMDS for role creds","two SSH sessions can connect at once","the Elastic IP attaches before boot","the TLS handshake is enabled"],c:0,e:"Default hop limit 1 blocks containers from the metadata service."},
+{t:"Deploy & IaC",q:"The IAM policy grants which Bedrock actions?",o:["InvokeModel and InvokeModelWithResponseStream","ListFoundationModels and GetFoundationModel","s3:GetObject together with s3:PutObject calls","ec2:RunInstances and ec2:DescribeImages calls"],c:0,e:"On the inference profiles and the underlying foundation models."},
+{t:"Deploy & IaC",q:"Deploying the stack requires which capability flag?",o:["CAPABILITY_NAMED_IAM","CAPABILITY_AUTO_EXPAND alone","no capability flag at all","CAPABILITY_LAMBDA_INLINE"],c:0,e:"Because it creates a named IAM role."},
+{t:"Deploy & IaC",q:"Secrets live in a .env on the EBS volume because the sandbox:",o:["denies SSM and Secrets Manager","makes a vault too slow to use","prevents the app reading env vars","stores them in Bedrock instead"],c:0,e:"Both spec-blessed stores are blocked; documented deviation."},
+{t:"Deploy & IaC",q:"The v1 route.js patch was dropped in v2 because:",o:["modifying shipped source is bad practice","the patch file was simply too large","Docker forbids read-only bind mounts","it accidentally broke the TLS setup"],c:0,e:"It re-breaks on upgrade and hurts reproducibility."},
+{t:"Deploy & IaC",q:"Releases and version tags are handled by which tool?",o:["Commitizen, using SemVer tags","Jenkins release pipelines","the Maven release plugin","npm version bumping only"],c:0,e:"tag_format v$version, major_version_zero true."},
+{t:"Deploy & IaC",q:"The instance root volume is provisioned as:",o:["gp3, 60 GB, encrypted","gp2, 30 GB, unencrypted","io2, 100 GB, provisioned IOPS","instance-store, ephemeral disk"],c:0,e:"Spec requires >=60 GB gp3; encryption on."},
+{t:"Deploy & IaC",q:"The two-stack trap: vLLM serving Gemma belongs to:",o:["the original local stack, not the AWS deploy","the AWS deploy, but not the local dev stack","both stacks in exactly the same configuration","neither of the two stacks in this project"],c:0,e:"AWS uses Bedrock via LiteLLM; vLLM is local-only."}
+];
+const MCQ_B3=[
+{t:"GitHub",q:"Git is best described as which kind of version control system?",o:["distributed, every clone has full history","centralized, with one master server","cloud-only, requiring an account","file-locking, one writer at a time"],c:0,e:"Every clone holds the whole history; you can work offline."},
+{t:"GitHub",q:"A git commit fundamentally represents:",o:["a snapshot of the tracked files","a pointer that names a branch","a connection to a remote server","an unresolved merge conflict"],c:0,e:"Commits are snapshots, not diffs of a single file."},
+{t:"GitHub",q:"Which command combines two branch histories together?",o:["git merge","git clone","git stash","git remote"],c:0,e:"merge joins histories; rebase replays them."},
+{t:"GitHub",q:"A .gitignore file is used to:",o:["exclude files from version control","encrypt secrets within the repo","list the project collaborators","define the CI pipeline jobs"],c:0,e:"It keeps build output, .env and noise out of git."},
+{t:"GitHub",q:"Forking a repository creates:",o:["your own server-side copy of it","just a new branch in the original","only a local clone on your disk","a pull request back upstream"],c:0,e:"A fork is your independent copy you can change freely."},
+{t:"GitHub",q:"A git tag is most commonly used to:",o:["mark a specific release point","permanently delete old history","hide a branch from others","merge two repositories together"],c:0,e:"Tags like v1.0.0 pin a release commit."},
+{t:"CI/CD",q:"The first stage of a CI pipeline is usually:",o:["fetching (checking out) the source","deploying straight to production","notifying all the stakeholders","archiving the previous build logs"],c:0,e:"You check out the code before building or testing it."},
+{t:"CI/CD",q:"An 'artifact' in a CI/CD pipeline is:",o:["a build output passed between stages","a report of which tests failed","a secret token used for auth","the runner machine itself"],c:0,e:"E.g. a compiled binary or a built image."},
+{t:"CI/CD",q:"The workflow_dispatch trigger in GitHub Actions enables:",o:["a manual run from the UI","automatic nightly scheduled runs","parallel matrix build expansion","automatic secret rotation"],c:0,e:"It lets a human start the workflow on demand."},
+{t:"CI/CD",q:"Caching dependencies in CI mainly serves to:",o:["speed up repeated builds","encrypt the cached files","replace running the tests","deploy the app more often"],c:0,e:"Reuse downloaded deps so builds are faster."},
+{t:"CI/CD",q:"A matrix build is used to:",o:["run one job across many configs","merge several branches at once","store build artifacts longer","cryptographically sign releases"],c:0,e:"E.g. test across several OS or language versions."},
+{t:"CI/CD",q:"'Shift left' on testing means you should:",o:["test earlier in the lifecycle","move servers to a left region","delay all tests until release","test only directly in production"],c:0,e:"Catch defects as early as possible."},
+{t:"IaC",q:"Terraform records what it manages in a:",o:["state file","Dockerfile","Ansible playbook","release changelog"],c:0,e:"State maps config to real resources; CloudFormation keeps state in AWS."},
+{t:"IaC",q:"terraform plan does what before you apply:",o:["previews the changes to be made","deletes the existing resources","pushes the config to git","runs the application tests"],c:0,e:"A dry-run diff of desired vs actual."},
+{t:"IaC",q:"Configuration drift refers to:",o:["real infra diverging from its definition","a temporary spike in network round-trip time","an unresolved git branch merge conflict","a container restarting itself after a crash"],c:0,e:"Manual changes that the code no longer reflects."},
+{t:"IaC",q:"A CloudFormation 'stack' is:",o:["a deployed group of template resources","a queue of pending build pipeline jobs","a single cached Docker image layer","one subnet living inside a wider VPC"],c:0,e:"All resources from a template, managed as a unit."},
+{t:"IaC",q:"CloudFormation change sets let you:",o:["preview a stack update first","roll back without any warning","encrypt the stack parameters","auto-scale the EC2 instances"],c:0,e:"See what an update will change before applying it."},
+{t:"IaC",q:"Immutable infrastructure means that you:",o:["replace servers rather than modify them","avoid using any containers in the stack","patch each running server live in place","share one single server across the team"],c:0,e:"Rebuild from the definition; no in-place mutation."},
+{t:"Docker",q:"Each instruction in a Dockerfile produces a:",o:["cached image layer","running container instance","new network bridge","persistent named volume"],c:0,e:"Layers are cached and reused across builds."},
+{t:"Docker",q:"CMD in a Dockerfile sets the:",o:["default command run when started","base image to build from","port published to the host","build context directory"],c:0,e:"CMD provides the default process/args."},
+{t:"Docker",q:"The difference between COPY and a volume is that COPY:",o:["bakes files into the image at build","is exactly the same as a volume","only works at container runtime","encrypts the files it transfers"],c:0,e:"COPY is build-time and immutable; volumes are runtime and mutable."},
+{t:"Docker",q:"A multi-stage build is used mainly to:",o:["keep the final image small","run several containers at once","build all stages in parallel","skip the layer build cache"],c:0,e:"Build artifacts in one stage, copy only what you need into a slim final."},
+{t:"Docker",q:"A bind mount differs from a named volume because it:",o:["maps a specific host path","is fully managed by Docker","cannot persist any data","always encrypts the data"],c:0,e:"Bind mounts point at an exact host directory."},
+{t:"Docker",q:"docker exec is used to:",o:["run a command in a running container","build a brand-new image","pull an image from a registry","create a new bridge network"],c:0,e:"Run a process inside an already-running container."},
+{t:"Docker",q:"EXPOSE in a Dockerfile does what:",o:["documents a port without publishing","opens the host firewall port","maps the port onto the host","starts a server on that port"],c:0,e:"It is metadata only; -p actually publishes."},
+{t:"Docker",q:"A container registry (Docker Hub, GHCR, ECR) is used to:",o:["store and distribute container images","run the containers for you","build the Dockerfiles itself","orchestrate a cluster of nodes"],c:0,e:"Registries hold images; they do not run or orchestrate them."},
+{t:"Ansible",q:"The Ansible inventory file defines:",o:["the managed hosts and their details","the list of tasks to execute","the secrets used in the run","the cloud resources to create"],c:0,e:"Hosts, groups, IPs and SSH connection details."},
+{t:"Ansible",q:"An Ansible playbook is written in:",o:["YAML","HCL","JSON only","raw Python"],c:0,e:"Human-readable YAML plays and tasks."},
+{t:"Ansible",q:"A 'play' in Ansible maps:",o:["hosts to a list of tasks","one task to one file","a role to a single secret","a module to a network port"],c:0,e:"It binds a host group to the work to do."},
+{t:"Ansible",q:"Jinja2 templates in Ansible are used to:",o:["generate config files from variables","encrypt the whole host inventory file","define and trigger the playbook handlers","schedule recurring cron jobs on the hosts"],c:0,e:"Render files dynamically per host."},
+{t:"Ansible",q:"The become directive is used to:",o:["run a task with elevated privileges","quietly skip this task on the host","notify a handler to run at the end","loop the task over a list of items"],c:0,e:"become: yes runs via sudo."},
+{t:"Ansible",q:"An Ansible role packages:",o:["reusable tasks, vars and templates","a single one-off shell command","a cloud infrastructure template","a prebuilt container image"],c:0,e:"A standard directory layout for reuse."},
+{t:"Ansible",q:"Chef and Puppet differ from Ansible because they are:",o:["pull-based and need an agent","agentless and push-based","always written in YAML","usable only in the cloud"],c:0,e:"Ansible is push + agentless; they pull via an agent."},
+{t:"Kubernetes",q:"The smallest deployable unit in Kubernetes is a:",o:["Pod","Container","Node","Service"],c:0,e:"A pod wraps one or more tightly-coupled containers."},
+{t:"Kubernetes",q:"A Kubernetes Deployment is responsible for:",o:["keeping a desired number of pod replicas","storing the cluster's secret material","routing external DNS into the cluster","building the container images for pods"],c:0,e:"It manages replica sets and rollouts."},
+{t:"Kubernetes",q:"A Kubernetes Service provides:",o:["a stable network endpoint to pods","persistent disk storage for pods","a build pipeline for the code","a TLS certificate for the app"],c:0,e:"Stable virtual IP/DNS in front of changing pods."},
+{t:"Kubernetes",q:"'Self-healing' in Kubernetes means that it:",o:["restarts or reschedules failed pods","patches the host OS by itself","writes the application code","encrypts all pod-to-pod traffic"],c:0,e:"The controller drives actual state toward desired state."},
+{t:"Kubernetes",q:"The main reason to choose Kubernetes over Compose is:",o:["orchestration across many hosts","a simpler single-file config","lower total memory usage","HTTPS support out of the box"],c:0,e:"Compose is single-host; Kubernetes spans a cluster."},
+{t:"Kubernetes",q:"A rolling update in Kubernetes:",o:["replaces pods gradually, no downtime","deletes every pod all at once","pauses the whole cluster first","rebuilds all the images again"],c:0,e:"It shifts traffic incrementally to new pods."},
+{t:"Kubernetes",q:"A node in a Kubernetes cluster is:",o:["a worker machine that runs pods","a single application container","one YAML manifest file","a network access policy"],c:0,e:"Nodes are the machines the scheduler places pods on."}
+];
+const MCQ_B4=[
+{t:"Foundations",q:"The Three Ways of DevOps are flow, feedback, and:",o:["continual learning and experimentation","strict cloud cost-control measures","mandatory manual release approvals","planned and accepted vendor lock-in"],c:0,e:"Flow, feedback, and a culture of continual learning."},
+{t:"Foundations",q:"In CALMS the letters stand for Culture, Automation, Lean, Measurement and:",o:["Sharing","Security","Scaling","Stability"],c:0,e:"Sharing knowledge and tools across teams."},
+{t:"Foundations",q:"'You build it, you run it' captures the idea of:",o:["shared Dev and Ops ownership","outsourcing all operations","a particular testing strategy","a cloud pricing model"],c:0,e:"The team that builds also operates it."},
+{t:"Foundations",q:"The DORA metric MTTR measures the:",o:["time to restore service after failure","mean time between two releases","monthly count of support tickets","time taken to run the test suite"],c:0,e:"A stability metric: recovery speed."},
+{t:"CI/CD",q:"'If it hurts, do it more often' is an argument for:",o:["small, frequent integrations","fewer but much larger releases","fully manual deployments","much longer test cycles"],c:0,e:"Bring the pain forward by doing it constantly."},
+{t:"CI/CD",q:"A red CI build on a pull request should:",o:["block the merge until it is fixed","be merged and fixed afterwards","be ignored if the change is small","immediately trigger a deployment"],c:0,e:"Keep main green; do not merge broken code."},
+{t:"CI/CD",q:"Blue-green deployment reduces risk by:",o:["keeping two environments and switching","deleting the old version first","skipping the test stages","scaling the service down to zero"],c:0,e:"Switch traffic to the new environment, roll back instantly."},
+{t:"CI/CD",q:"A canary release works by:",o:["routing a small traffic share to the new","deploying only on Friday evenings","running just the unit tests first","always rolling back after deploy"],c:0,e:"Expose a few users first, then widen."},
+{t:"IaC",q:"Running terraform apply twice with no change should:",o:["make no further changes (idempotent)","duplicate every managed resource","destroy the whole stack","fail with a hard error"],c:0,e:"Idempotency: it converges to the same state."},
+{t:"IaC",q:"Committing Terraform state with secrets to git is:",o:["risky, because state can hold secrets","a strict Terraform requirement to do","the officially recommended default way","technically impossible to ever do"],c:0,e:"State can contain plaintext secrets; keep it out of git."},
+{t:"Docker",q:"In compose, 'ports' does what 'expose' does NOT:",o:["publish the port to the host","document the port internally","encrypt the network traffic","create a persistent volume"],c:0,e:"expose is metadata; ports actually maps to the host."},
+{t:"Docker",q:"With no volume attached, data written inside a container is:",o:["lost when the container is removed","saved to the host automatically","pushed up to the registry","shared with every container"],c:0,e:"The writable layer dies with the container."},
+{t:"Docker",q:"The Docker build cache is invalidated when:",o:["an instruction or its inputs change","the running container is restarted","the host machine fully reboots","a new volume is attached to it"],c:0,e:"A changed layer busts the cache for it and below."},
+{t:"Docker",q:"ENTRYPOINT versus CMD: ENTRYPOINT is the:",o:["fixed executable; CMD gives default args","exact same thing as the CMD setting","setting that is used only at build time","base image that the build starts from"],c:0,e:"ENTRYPOINT is the command; CMD supplies default arguments."},
+{t:"Docker",q:"Containers on one compose network find each other by:",o:["service name via embedded DNS","a hardcoded static IP only","the host machine's hosts file","an external load balancer"],c:0,e:"Docker's DNS resolves service names internally."},
+{t:"Ansible",q:"Re-running a well-written playbook should report:",o:["changed only where state differed","changed on absolutely every task","no tasks executed at all","a failure on the second run"],c:0,e:"Idempotent modules act only when needed."},
+{t:"Ansible",q:"To run modules, the control node needs on the target:",o:["SSH access and Python present","a running background agent","Docker already installed","an HTTP server listening"],c:0,e:"Agentless: SSH plus Python on the host."},
+{t:"Kubernetes",q:"A Pod can contain:",o:["one or more tightly-coupled containers","exactly one full virtual machine","only completely stateless app code","an entire Kubernetes worker node"],c:0,e:"Usually one container, sometimes a few that share context."},
+{t:"Kubernetes",q:"ConfigMaps and Secrets in Kubernetes are used to:",o:["inject config and sensitive data into pods","build the container images for the pods","route external DNS traffic to services","add new worker nodes to the cluster"],c:0,e:"They externalise configuration from the image."},
+{t:"Kubernetes",q:"The Horizontal Pod Autoscaler scales by:",o:["adding or removing pod replicas","resizing the node's disk","upgrading the host kernel","swapping the container image"],c:0,e:"It changes replica count based on load."},
+{t:"Kubernetes",q:"kubectl is the:",o:["CLI used to talk to the cluster API","container runtime on each node","scheduler that places the pods","linter for YAML manifests"],c:0,e:"The command-line client for the Kubernetes API."},
+{t:"Kubernetes",q:"When is Compose enough and Kubernetes overkill?",o:["a single-host, low-traffic deployment","a global multi-region service","a fleet of many microservices","a strict auto-scaling workload"],c:0,e:"For one host with modest load, Compose suffices."},
+{t:"LobeChat project",q:"If Postgres goes down, what still partly works?",o:["cached static UI assets may load","new chats persist as normal","Casdoor login still succeeds","absolutely nothing responds"],c:0,e:"Anything stateful (auth, history, config) fails; cached assets may render."},
+{t:"LobeChat project",q:"The browser cannot open http://mcphub:3000 because:",o:["that name resolves only inside Docker","MCPHub is currently offline and down","it requires a login password first","the chosen port number is incorrect"],c:0,e:"Service names resolve only on the internal network."},
+{t:"LobeChat project",q:"File upload kept failing with 'Mixed Content' until:",o:["S3_ENDPOINT was set to the public host","the storage bucket was fully deleted","cross-origin CORS was disabled","TLS was turned off on the whole site"],c:0,e:"Signing against internal http://minio:9000 is blocked on an HTTPS page."},
+{t:"LobeChat project",q:"The error 'Model use case details not submitted' came from:",o:["Bedrock Anthropic's per-account form","an incorrect account login password","a missing data volume mount point","an expired public TLS certificate"],c:0,e:"Anthropic on Bedrock gates on a one-time use-case form."},
+{t:"LobeChat project",q:"Why fire the MCP tool demo early after a fresh boot?",o:["stdio sessions drop over time","the GPU needs to warm up","certificates expire very fast","Postgres locks up quickly"],c:0,e:"Long-lived stdio MCP sessions degrade, so demo while warm."},
+{t:"LobeChat project",q:"The boot script creates the lobe bucket because MinIO:",o:["does not auto-create the bucket","actively blocks bucket creation","needs a console click to do it","only ever uses a fixed bucket"],c:0,e:"The bucket must exist before the first upload."},
+{t:"LobeChat project",q:"The entire stack runs on:",o:["a single EC2 instance","a Kubernetes cluster","three separate EC2 hosts","AWS Fargate tasks"],c:0,e:"One EC2 runs the whole docker-compose stack."},
+{t:"LobeChat project",q:"Why is Casdoor served on its own auth- subdomain?",o:["to avoid frontend asset-path issues","to use a different TLS authority","purely to reduce hosting cost","because Bedrock demands it"],c:0,e:"Its React frontend has trouble with absolute asset URLs under a path."},
+{t:"CI/CD",q:"GitHub Actions exposes secrets to a workflow as:",o:["masked environment values at run time","plaintext entries inside the build log","files committed into the repository","downloadable build pipeline artifacts"],c:0,e:"Injected at run time and masked in output."},
+{t:"IaC",q:"Declarative tools are idempotent mainly because they:",o:["reconcile toward a desired state","run steps in a fixed order","always delete then recreate","cache their previous results"],c:0,e:"They compute the diff to the target state."},
+{t:"Docker",q:"The danger of running a container as root is that:",o:["a breakout has host-level privileges","the resulting image is larger","it cannot reach the network","its builds run more slowly"],c:0,e:"Least privilege: use a non-root user."},
+{t:"Foundations",q:"MLOps adds model monitoring chiefly to detect:",o:["data and model drift over time","network latency between hosts","disk usage on the servers","failed user login attempts"],c:0,e:"Models silently decay as the world changes."},
+{t:"Ansible",q:"Provisioning versus configuration: Ansible's job is:",o:["configuring an existing machine","creating the VPC and the EC2","billing the cloud account","issuing the TLS certificates"],c:0,e:"CloudFormation provisions; Ansible configures."},
+{t:"Kubernetes",q:"A Deployment differs from a bare Pod because it:",o:["manages replicas and self-healing","runs entirely without containers","stores the application's data","terminates the TLS for the app"],c:0,e:"A Deployment supervises pods; a bare pod is not replaced if it dies."},
+{t:"LobeChat project",q:"LiteLLM authenticates to Bedrock using:",o:["the EC2 instance role via IMDS","a hardcoded static API key","a Casdoor-issued OAuth token","an SSH key pair on disk"],c:0,e:"No key in env; it assumes the instance role."},
+{t:"LobeChat project",q:"The only externally reachable port set on the box is:",o:["80 and 443","3210 and 8000","5432 and 9000","47000 and 47002"],c:0,e:"Only Caddy's 80/443 are open at the security group."},
+{t:"CI/CD",q:"The core practice of Continuous Integration is:",o:["merging and testing small changes often","deploying straight to production","writing documentation weekly","running only manual QA gates"],c:0,e:"Integrate frequently so problems surface early."},
+{t:"LobeChat project",q:"The exam's technical part is fundamentally about:",o:["deploying the LobeChat repo to AWS","training a model from scratch","building a native mobile app","designing a relational database"],c:0,e:"The teacher's note: the MCQ is about what we did \u2014 the repo and its deploy."}
+];
+const SHORT=[
+
+
+{t:"Foundations",q:"Why is DevOps called a culture and not just a set of tools?",a:"Because the root problem is the Dev/Ops silo and their opposing incentives. Tools only help once collaboration, shared ownership and feedback exist. Automating a dysfunctional, siloed process just automates the dysfunction."},
+{t:"Foundations",q:"Why do we bother measuring the DORA metrics?",a:"You cannot improve what you do not measure. The four metrics prove that velocity (deploy frequency, lead time) and stability (MTTR, change-failure rate) can rise together, debunking the old 'fast versus safe' trade-off."},
+{t:"Foundations",q:"Why must MLOps version data and models, not only code?",a:"A model's behaviour depends on data plus code plus parameters. Without versioning all three you cannot reproduce or debug it, and silent data drift degrades it over time, so you need monitoring and retraining."},
+{t:"Foundations",q:"Why treat servers as cattle rather than pets?",a:"Hand-nursed servers drift into unique 'snowflakes' nobody can reproduce. Replacing from a definition removes drift and makes recovery deterministic and fast."},
+{t:"Foundations",q:"Why self-host the AI stack instead of just using a SaaS assistant?",a:"For control and confidentiality: data stays in infrastructure you own, not a third party, with predictable cost and freedom to swap models. The trade-off is that you take on the operations burden."},
+{t:"GitHub & CI/CD",q:"Why use pull requests instead of pushing straight to main?",a:"A PR creates a gate where code review and automated CI run before the change reaches main, keeping main releasable and changes small and reviewable."},
+{t:"GitHub & CI/CD",q:"Why use Conventional Commits and SemVer?",a:"Structured commit messages let tools compute the next version and changelog automatically, and SemVer tells consumers whether an upgrade is safe (minor/patch) or breaking (major)."},
+{t:"GitHub & CI/CD",q:"Why do we need to use secrets in GitHub instead of a .env file in the repo?",a:"Anything committed to git is permanent and visible to anyone with repo access, even if later deleted. GitHub Secrets are encrypted and injected only at run time, so credentials never live in the history or the workflow file."},
+{t:"GitHub & CI/CD",q:"Why run CI on every pull request rather than weekly?",a:"Integrating small changes constantly surfaces breakages within minutes, while the change is still small and cheap to fix, instead of a painful big-bang merge later."},
+{t:"GitHub & CI/CD",q:"Why is the test pyramid shaped with unit tests at the base?",a:"Unit tests are fast, cheap and stable, so you can afford many; end-to-end tests are slow and brittle, so you keep few. Inverting the pyramid makes the suite slow and flaky."},
+{t:"GitHub & CI/CD",q:"Why separate Continuous Delivery from Continuous Deployment?",a:"Some domains need a human or compliance gate before production. Delivery keeps you always-releasable with that gate; deployment removes it once your tests and monitoring are strong enough to trust."},
+{t:"GitHub & CI/CD",q:"Why did the homework add a CI workflow (v2.x) before any infrastructure?",a:"CI is the first automation pillar: you make the code trustworthy with automated checks before you automate shipping it. Order matters — quality gate first, deployment later."},
+{t:"IaC",q:"Why use Infrastructure as Code instead of clicking in the console?",a:"Because the infrastructure becomes versioned, reviewable, reproducible code with no configuration drift. Three identical environments come from one definition, and you can rebuild or tear down deterministically."},
+{t:"IaC",q:"Why prefer a declarative IaC approach over an imperative one?",a:"You state the desired end state and the engine reconciles to it, which is idempotent and frees you from owning brittle step-ordering and 'does it already exist' logic."},
+{t:"IaC",q:"Why does immutability (replace, don't patch) reduce risk?",a:"Patching live servers creates drift and snowflakes; replacing from the definition means every change is a fresh, known, reproducible build, so there are no mystery states."},
+{t:"IaC",q:"Why did we switch from Terraform (v1) to CloudFormation (v2)?",a:"The teacher required CloudFormation. It is AWS-native and needs no external state backend; the trade-off is that it is not multi-cloud like Terraform."},
+{t:"IaC",q:"Why resolve the AMI at deploy time instead of hardcoding it?",a:"A hardcoded AMI rots and is not portable. The sandbox also blocks the SSM public-parameter lookup, so deploy.sh resolves the latest image via DescribeImages and passes it as a parameter — dynamic, with no AMI baked into the template."},
+{t:"IaC",q:"Why does CloudFormation roll back automatically on a failed update?",a:"To never leave the stack half-updated and inconsistent. Rolling back to the last known-good state keeps the environment in a state you can reason about and re-try."},
+{t:"Docker",q:"Why use containers instead of virtual machines for this stack?",a:"Containers share the host kernel, so they are light, start in seconds and pack densely, and they give 'build once, run anywhere' consistency across dev, stage and prod."},
+{t:"Docker",q:"Why is only Caddy allowed to publish host ports?",a:"To force all external traffic through the reverse proxy, which does TLS, host-matching and routing. Internal services stay private on the Docker bridge and are reachable only by name."},
+{t:"Docker",q:"Why does MCPHub need a custom Dockerfile?",a:"Stdio MCP servers spawned inside it need extra system binaries (graphviz, libgraphviz-dev, gcc) and the docker CLI to launch sibling containers. You bake those into the image rather than hand-editing a running container."},
+{t:"Docker",q:"Why is pinning image versions better than using :latest?",a:"\":latest\" is mutable, so a later rebuild can silently pull a different version and break things. Pinning a specific tag guarantees the same image every time — reproducibility."},
+{t:"Docker",q:"Why can LobeChat reach Postgres as 'postgres:5432' but your browser cannot?",a:"Docker's embedded DNS resolves service names only on the shared internal network, between containers. The browser is outside that network and only reaches the stack through Caddy on 443."},
+{t:"Docker",q:"Why would you move from Docker Compose to Kubernetes?",a:"Compose is single-host. Kubernetes orchestrates containers across a cluster of many hosts, adding auto-scaling, self-healing and rolling updates. You move when one machine is no longer enough; it does not replace the container runtime."},
+{t:"Docker",q:"Why do Postgres, MinIO and Qdrant need volumes?",a:"Containers are ephemeral — their writable layer is lost on recreation. Volumes persist data on the host so databases and files survive restarts and image updates."},
+{t:"Ansible",q:"Why do we need Ansible at all in this project?",a:"To deploy and set up the software on the server: install packages, write config files and start services. That is configuration management — the step that happens after the infrastructure is provisioned."},
+{t:"Ansible",q:"Why is being agentless an advantage for Ansible?",a:"There is no agent to install, secure and keep updated on every target. It just needs SSH and Python, which lowers setup cost and reduces the attack surface."},
+{t:"Ansible",q:"Why prefer Ansible modules over raw shell commands?",a:"Modules are idempotent: they check the current state and act only if a change is needed, so a playbook is safe to run repeatedly. A raw shell command blindly re-executes every run."},
+{t:"Ansible",q:"Why is the correct order provision-then-configure (CloudFormation then Ansible)?",a:"You cannot configure a machine that does not exist yet, and the inventory of which hosts to configure comes from the stack's outputs. Provisioning must finish first."},
+{t:"Ansible",q:"Why split CloudFormation (infra-only) from Ansible (config) in v4.x?",a:"Separation of concerns. Each tool does one job — CloudFormation creates resources, Ansible configures them — which keeps both simpler, testable and reusable, instead of tangling everything in a UserData blob."},
+{t:"LobeChat project",q:"Why is LiteLLM placed in front of Bedrock?",a:"LobeChat speaks the OpenAI API and Bedrock does not, so LiteLLM translates between them. It is also the single config file where you can swap provider, which breaks vendor lock-in."},
+{t:"LobeChat project",q:"Why does the model, not MCPHub, decide when to call a tool?",a:"Choosing a tool is an inference decision (function calling) made during generation by the LLM. MCPHub is only a tool-execution layer that runs the call after the model emits it."},
+{t:"LobeChat project",q:"Why have both Postgres-with-pgvector and Qdrant?",a:"Separation of concerns: Postgres holds transactional/operational data (users, sessions, messages), and Qdrant is a dedicated vector database for RAG with better recall and latency. pgvector exists but is not used for the RAG path."},
+{t:"LobeChat project",q:"Why store uploaded files in MinIO instead of the database?",a:"Object storage is built for large binary blobs with an S3 API, cheaply and at scale. Databases are for structured, queryable data; stuffing big files into them is slow and wasteful."},
+{t:"LobeChat project",q:"Why must S3_ENDPOINT equal S3_PUBLIC_DOMAIN?",a:"LobeChat signs the presigned upload URL with the endpoint host and hands it straight to the browser without rewriting it. If it signs against the internal http://minio:9000, the HTTPS page blocks it as Mixed Content, so both must be the public HTTPS host."},
+{t:"LobeChat project",q:"Why is Casdoor a separate service instead of built into LobeChat?",a:"Authentication is a reusable, cross-cutting concern with its own admin UI and support for many identity providers. Bundling it would create lock-in and limit identity options; an external IdP is the industry pattern."},
+{t:"LobeChat project",q:"Why does the site reject the raw IP and the direct origin?",a:"To force traffic through the proxy hostname, which has the valid certificate and host-matching. Raw-IP HTTPS has no cert (handshake fails) and raw-IP HTTP returns 421; only 80 and 443 are open."},
+{t:"LobeChat project",q:"Why is the MCP demo done early, right after a fresh boot?",a:"The stdio transport that most MCP servers use drops long-lived sessions, especially behind the proxy. Firing the tool while sessions are still warm is the most reliable moment."},
+{t:"LobeChat project",q:"Why are secrets written to a .env file on the EBS volume instead of Secrets Manager?",a:"The sandbox role denies both ssm:* and secretsmanager:CreateSecret, so neither spec-blessed store works. As a documented deviation, secrets are written to /opt/lobechat/.env (root, 0600) on the encrypted volume."},
+{t:"LobeChat project",q:"Why is modifying LobeChat's shipped source code considered bad practice?",a:"It breaks reproducibility and upgrades — every new image re-breaks your patch and the deploy is no longer rebuildable from the official artifact. You configure from outside (env, compose, proxy) instead. This is why the v1 route.js patch was removed."},
+{t:"LobeChat project",q:"Why is running the whole stack on one EC2 acceptable here?",a:"It is a lift-and-shift demo, not a high-traffic production service. One host keeps cost and operations low while still proving the full architecture works end to end; you would split and add HA only as real load and dependence grow."}
+];
+const BLOCKS=[
+ {key:'b1',name:'Block 1 · Core mix',qs:MCQ_B1},
+ {key:'b2',name:'Block 2 · LobeChat project',qs:MCQ_B2},
+ {key:'b3',name:'Block 3 · Theory deep',qs:MCQ_B3},
+ {key:'b4',name:'Block 4 · Tricky & Kubernetes',qs:MCQ_B4},
+];
+BLOCKS.forEach(b=>b.qs.forEach((q,i)=>q.id=b.key+'-'+i));
+const ALLQ={};BLOCKS.forEach(b=>b.qs.forEach(q=>ALLQ[q.id]=q));
+let STARS=new Set(JSON.parse(localStorage.getItem('bet_stars')||'[]'));
+function saveStars(){localStorage.setItem('bet_stars',JSON.stringify([...STARS]))}
+const COLORS={"Foundations":"#5b6cff","GitHub & CI/CD":"#0d9488","GitHub":"#0d9488","CI/CD":"#0d9488","IaC":"#e11d48","Docker":"#15803d","Ansible":"#7c3aed","Kubernetes":"#0ea5e9","LobeChat project":"#d97706","Stack":"#15803d","Data":"#0d9488","AI & MCP":"#7c3aed","Proxy & Auth":"#d97706","Deploy & IaC":"#e11d48"};
+function col(t){return COLORS[t]||"#6b7280"}
+const LETTERS=["A","B","C","D"];
+const $=id=>document.getElementById(id);
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+/* ============================ ROUTER + TIMER ============================ */
+let timerInt=null,secs=0,paused=false;
+function startTimer(){stopTimer();secs=0;paused=false;$('timer').style.display='inline';tick();timerInt=setInterval(()=>{if(!paused){secs++;tick()}},1000)}
+function tick(){const m=String(Math.floor(secs/60)).padStart(2,'0'),s=String(secs%60).padStart(2,'0');$('timer').textContent=m+':'+s}
+function stopTimer(){clearInterval(timerInt);timerInt=null}
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');
+  $('homeBtn').style.display=id==='home'?'none':'inline-block';
+  if(id==='home'||id==='mcqhome'||id==='short'||id==='cards'){stopTimer();$('liveScore').style.display='none';$('timer').style.display='none';$('pbar').style.width='0'}
+  if(id==='short'&&!shortBuilt)buildShort();
+  if(id==='cards'&&!cardsBuilt)buildCards();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ============================ MCQ HOME ============================ */
+function openMCQHome(){
+  const w=$('blockList');w.innerHTML='';
+  BLOCKS.forEach(b=>{const st=b.qs.filter(q=>STARS.has(q.id)).length;
+    const btn=document.createElement('button');btn.className='block-card';btn.style.cursor='pointer';
+    btn.innerHTML='<h3>'+b.name+'</h3><p>'+b.qs.length+' questions'+(st?' · '+st+'★':'')+'</p>';
+    btn.onclick=()=>runBlock(b.qs,b.name);w.appendChild(btn);});
+  $('starredP').textContent=[...STARS].length+' flagged across all blocks';
+  go('mcqhome');
+}
+function studyStarred(){const qs=[...STARS].map(id=>ALLQ[id]).filter(Boolean);if(!qs.length){alert('No starred questions yet. Tap ☆ on a question while practising.');return}runBlock(qs,'Starred questions')}
+
+/* ============================ MCQ ENGINE ============================ */
+let R=null;
+function runBlock(qs,label){
+  R={label,base:qs.slice(),queue:shuffle(qs.slice()),correct:new Set(),first:{},presented:0,answered:false,cur:null,order:[]};
+  $('liveScore').style.display='inline';$('scoreNow').textContent='0';
+  $('ringFill').style.strokeDashoffset='326.7';
+  go('mcq');startTimer();nextCard();
+}
+function nextCard(){if(R.queue.length===0)return finishBlock();renderCard(R.queue[0])}
+function renderCard(q){
+  R.cur=q;R.order=shuffle(q.o.map((_,i)=>i));R.answered=false;
+  const total=R.base.length,done=R.correct.size;
+  $('pbar').style.width=(done/total*100)+'%';
+  $('qCounter').textContent='Mastered '+done+' / '+total+' · '+R.label;
+  $('qTag').textContent=q.t;$('qTag').style.color=col(q.t);
+  $('qText').textContent=q.q;
+  const sb=$('starBtn');const on=STARS.has(q.id);sb.textContent=on?'★':'☆';sb.classList.toggle('on',on);
+  sb.onclick=()=>{if(STARS.has(q.id))STARS.delete(q.id);else STARS.add(q.id);saveStars();const o=STARS.has(q.id);sb.textContent=o?'★':'☆';sb.classList.toggle('on',o)};
+  const ob=$('options');ob.innerHTML='';
+  R.order.forEach((orig,pos)=>{const b=document.createElement('button');b.className='option';b.dataset.pos=pos;b.dataset.orig=orig;
+    b.innerHTML='<span class="key">'+LETTERS[pos]+'</span><span>'+q.o[orig]+'</span><span class="mark"></span>';
+    b.onclick=()=>select(pos,orig);ob.appendChild(b)});
+  $('feedback').className='feedback';$('feedback').innerHTML='';
+  $('nextBtn').style.display='none';
+}
+function select(pos,orig){
+  if(R.answered)return;R.answered=true;
+  const q=R.cur,correct=(orig===q.c);
+  if(!(q.id in R.first))R.first[q.id]=correct;
+  if(correct)R.correct.add(q.id);
+  document.querySelectorAll('#options .option').forEach(o=>{o.classList.add('locked');const oo=+o.dataset.orig;
+    if(oo===q.c){o.classList.add('correct');o.querySelector('.mark').textContent='✓'}
+    else if(+o.dataset.pos===pos){o.classList.add('wrong');o.querySelector('.mark').textContent='✕'}});
+  const fb=$('feedback');fb.className='feedback show '+(correct?'ok':'no');
+  fb.innerHTML='<span class="lab">'+(correct?'Correct':'Wrong — read why')+'</span>'+(correct?'':'<b>'+q.o[q.c]+'</b><br>')+q.e;
+  R.queue.shift();
+  if(!correct)R.queue.splice(Math.min(3,R.queue.length),0,q);
+  $('scoreNow').textContent=Object.values(R.first).filter(Boolean).length;
+  const nb=$('nextBtn');nb.style.display='inline-block';nb.textContent=R.queue.length===0?'See block stats':'Next';nb.onclick=afterNext;
+}
+function afterNext(){
+  R.presented++;
+  if(R.queue.length>0 && R.presented%7===0){showBreak()}
+  else nextCard();
+}
+function showBreak(){paused=true;$('breakSeen').textContent=R.presented;$('breakRow').innerHTML='<button class="btn ghost" onclick="resumeNow()">Keep going</button><button class="btn" onclick="pauseHere()">Pause timer</button>';$('breakOverlay').classList.add('show')}
+function resumeNow(){$('breakOverlay').classList.remove('show');paused=false;nextCard()}
+function pauseHere(){$('breakRow').innerHTML='<button class="btn" onclick="resumeNow()">I\'m back — resume</button>'}
+function finishBlock(){
+  stopTimer();$('pbar').style.width='100%';
+  const total=R.base.length,got=Object.values(R.first).filter(Boolean).length,pct=Math.round(got/total*100);
+  $('ringFill').style.strokeDashoffset=(326.7*(1-got/total)).toFixed(1);
+  const pass=pct>=50;$('ringFill').setAttribute('stroke',pass?'#15803d':'#e11d48');
+  $('ringPct').textContent=pct+'%';$('ringFrac').textContent=got+'/'+total;
+  const v=$('verdict');v.textContent=pass?'Passed':'Keep drilling';v.className='verdict '+(pass?'pass':'fail');
+  $('mresultSub').textContent=got+' of '+total+' right on the first try · time '+$('timer').textContent;
+  const tp={};R.base.forEach(q=>{const t=q.t;tp[t]=tp[t]||{c:0,n:0};tp[t].n++;if(R.first[q.id])tp[t].c++});
+  const bd=$('bdRows');bd.innerHTML='';
+  Object.keys(tp).forEach(t=>{const{c,n}=tp[t],p=Math.round(c/n*100);bd.innerHTML+='<div class="bd-row"><span class="name">'+t+'</span><div class="bd-bar"><div class="bd-fill" style="width:'+p+'%;background:'+(p>=50?'#15803d':'#e11d48')+'"></div></div><span class="frac">'+c+'/'+n+'</span></div>'});
+  const wrong=R.base.filter(q=>!R.first[q.id]);
+  const rl=$('reviewList');rl.innerHTML=wrong.length?'':'<p style="color:var(--muted)">Nothing missed on the first attempt. 🎉</p>';
+  wrong.forEach(q=>{rl.innerHTML+='<div class="review-item"><div class="review-q">'+q.q+'</div><div class="review-line corr"><span class="tag">Correct</span>'+q.o[q.c]+'</div><div style="color:var(--muted);margin-top:6px">'+q.e+'</div></div>'});
+  $('retryBlock').onclick=()=>runBlock(R.base,R.label);
+  $('retryWrong').onclick=()=>{if(!wrong.length){alert('No mistakes — perfect block!');return}runBlock(wrong,R.label+' · misses')};
+  go('mresult');
+}
+
+/* ============================ SHORT LINEAR ============================ */
+let shortBuilt=false;
+function buildShort(){
+  shortBuilt=true;
+  const topics=[...new Set(SHORT.map(s=>s.t))];
+  $('shortCount').textContent=SHORT.length+' questions · '+topics.length+' topics';
+  const tn=$('topicnav');tn.innerHTML='';
+  topics.forEach(t=>{const id='st-'+t.replace(/[^a-z]/gi,'');tn.innerHTML+='<a href="#'+id+'">'+t+'</a>'});
+  const body=$('shortBody');body.innerHTML='';let n=0;
+  topics.forEach(t=>{const id='st-'+t.replace(/[^a-z]/gi,'');
+    body.innerHTML+='<h3 class="topic-h" id="'+id+'">'+t+'</h3><div class="topic-rule" style="background:'+col(t)+'"></div>';
+    SHORT.filter(s=>s.t===t).forEach(s=>{n++;body.innerHTML+='<details class="qa-item"><summary><span class="qn">'+n+'</span><span>'+s.q+'</span></summary><div class="a">'+s.a+'</div></details>'})});
+}
+
+/* ============================ FLASHCARDS ============================ */
+let cardsBuilt=false,fcView='grid';
+function buildCards(){
+  cardsBuilt=true;
+  const topics=['All',...new Set(SHORT.map(s=>s.t))];
+  const sel=$('topicFilter');sel.innerHTML='';topics.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o)});
+  sel.onchange=renderCards;
+  document.querySelectorAll('#viewSeg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#viewSeg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');fcView=b.dataset.v;renderCards()});
+  renderCards();
+}
+function filteredCards(){const f=$('topicFilter').value;return SHORT.filter(s=>f==='All'||s.t===f)}
+function renderCards(){
+  const grid=$('gridView'),kdk=$('kdkView');
+  if(fcView==='grid'){grid.style.display='block';kdk.style.display='none';const g=$('grid');g.innerHTML='';
+    filteredCards().forEach(s=>{const c=document.createElement('div');c.className='fcard';c.style.borderTopColor=col(s.t);
+      c.innerHTML='<div class="tp">'+s.t+'</div><div class="fq">'+s.q+'</div><div class="fa"><b>Answer.</b> '+s.a+'</div><div class="hint">click to flip</div>';
+      c.onclick=()=>c.classList.toggle('flip');g.appendChild(c)});
+  } else {grid.style.display='none';kdk.style.display='block';startKDK()}
+}
+let K={deck:[],i:0,know:0,dont:0,unknown:[]};
+function startKDK(){K.deck=shuffle([...filteredCards()]);K.i=0;K.know=0;K.dont=0;K.unknown=[];renderKDK()}
+function renderKDK(){
+  const v=$('kdkView');
+  if(K.i>=K.deck.length){v.innerHTML='<div class="kdk"><div class="bigcard" style="border-top-color:var(--green)"><div class="tp">round complete</div><div class="bq">You knew '+K.know+' of '+K.deck.length+'</div>'+(K.unknown.length?'<div class="ba" style="display:block"><b>'+K.unknown.length+' to review.</b></div>':'<div class="ba" style="display:block"><b>Perfect round.</b></div>')+'</div><div class="kdk-actions">'+(K.unknown.length?'<button class="btn dont" onclick="drillUnknown()">Drill the '+K.unknown.length+' I missed</button>':'')+'<button class="btn ghost" onclick="startKDK()">Restart all</button></div></div>';return}
+  const s=K.deck[K.i];
+  v.innerHTML='<div class="kdk"><div class="kdk-bar"><span>Card <b>'+(K.i+1)+'</b> / '+K.deck.length+'</span><span>known <b>'+K.know+'</b> · review <b>'+K.dont+'</b></span></div><div class="bigcard" id="bigcard"><div class="tp">'+s.t+'</div><div class="bq">'+s.q+'</div><div class="ba"><b>Answer.</b> '+s.a+'</div></div><div class="kdk-flip"><button class="btn ghost" id="flipBtn">Flip to answer</button></div><div class="kdk-actions" id="kdkAct" style="display:none"><button class="btn dont" onclick="markKDK(false)">Didn\'t know</button><button class="btn know" onclick="markKDK(true)">I knew it</button></div></div>';
+  $('flipBtn').onclick=()=>{$('bigcard').classList.add('flip');$('flipBtn').style.display='none';$('kdkAct').style.display='flex'};
+}
+function markKDK(k){const s=K.deck[K.i];if(k)K.know++;else{K.dont++;K.unknown.push(s)}K.i++;renderKDK()}
+function drillUnknown(){K.deck=shuffle([...K.unknown]);K.i=0;K.know=0;K.dont=0;K.unknown=[];renderKDK()}
+
+/* keyboard for MCQ */
+document.addEventListener('keydown',e=>{
+  if(!$('mcq').classList.contains('active'))return;
+  if($('breakOverlay').classList.contains('show'))return;
+  if(!R||!R.cur)return;
+  const map={'1':0,'2':1,'3':2,'4':3,'a':0,'b':1,'c':2,'d':3},k=e.key.toLowerCase();
+  if(!R.answered&&k in map&&map[k]<R.order.length){const pos=map[k];select(pos,R.order[pos])}
+  else if(R.answered&&e.key==='Enter'){afterNext()}
+});
+</script>
+</body>
+</html>
